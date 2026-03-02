@@ -28,7 +28,7 @@ struct FolderScanner {
         for item in contents.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
             let isDirectory = (try? item.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
             if isDirectory {
-                let child = try scan(url: item)
+                let child = try self.scan(url: item)
                 children.append(child)
             } else if Self.imageExtensions.contains(item.pathExtension.lowercased()) {
                 photoFiles.append(item)

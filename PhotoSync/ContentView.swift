@@ -31,11 +31,11 @@ struct ContentView: View {
             GroupBox {
                 HStack(spacing: 12) {
                     Button("Choose Folder…") {
-                        viewModel.selectFolder()
+                        self.viewModel.selectFolder()
                     }
-                    .disabled(viewModel.syncStatus.isActive)
+                    .disabled(self.viewModel.syncStatus.isActive)
 
-                    if let url = viewModel.selectedFolderURL {
+                    if let url = self.viewModel.selectedFolderURL {
                         Label(url.path, systemImage: "folder")
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -56,34 +56,34 @@ struct ContentView: View {
             // MARK: Sync Controls
             HStack(alignment: .center, spacing: 16) {
                 Button {
-                    viewModel.startSync()
+                    self.viewModel.startSync()
                 } label: {
                     Label("Sync to Photos", systemImage: "arrow.triangle.2.circlepath")
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!viewModel.canSync)
+                .disabled(!self.viewModel.canSync)
 
                 Spacer()
 
-                Text(viewModel.syncStatus.displayString)
-                    .foregroundStyle(statusColor)
+                Text(self.viewModel.syncStatus.displayString)
+                    .foregroundStyle(self.statusColor)
                     .font(.callout)
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
 
             // MARK: Progress Bar
-            if viewModel.syncStatus.isActive || viewModel.syncStatus == .completed {
+            if self.viewModel.syncStatus.isActive || self.viewModel.syncStatus == .completed {
                 VStack(alignment: .leading, spacing: 4) {
-                    ProgressView(value: viewModel.progressFraction)
+                    ProgressView(value: self.viewModel.progressFraction)
                         .progressViewStyle(.linear)
 
                     HStack {
-                        Text("\(viewModel.completedPhotos) / \(viewModel.totalPhotos) photos")
+                        Text("\(self.viewModel.completedPhotos) / \(self.viewModel.totalPhotos) photos")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text(String(format: "%.0f%%", viewModel.progressFraction * 100))
+                        Text(String(format: "%.0f%%", self.viewModel.progressFraction * 100))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -98,10 +98,10 @@ struct ContentView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 2) {
-                        ForEach(viewModel.logEntries) { entry in
+                        ForEach(self.viewModel.logEntries) { entry in
                             Text(entry.message)
                                 .font(.system(size: 12, design: .monospaced))
-                                .foregroundStyle(logColor(for: entry.type))
+                                .foregroundStyle(self.logColor(for: entry.type))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .id(entry.id)
                         }
@@ -109,8 +109,8 @@ struct ContentView: View {
                     .padding(8)
                 }
                 .background(Color(nsColor: .textBackgroundColor))
-                .onChange(of: viewModel.logEntries.count) {
-                    if let last = viewModel.logEntries.last {
+                .onChange(of: self.viewModel.logEntries.count) {
+                    if let last = self.viewModel.logEntries.last {
                         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
@@ -122,7 +122,7 @@ struct ContentView: View {
     // MARK: - Helpers
 
     private var statusColor: Color {
-        switch viewModel.syncStatus {
+        switch self.viewModel.syncStatus {
         case .completed: return .green
         case .failed: return .red
         default: return .secondary

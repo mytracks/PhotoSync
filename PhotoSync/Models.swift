@@ -13,12 +13,12 @@ struct FolderNode {
     var children: [FolderNode]   // subdirectories
     var photoFiles: [URL]        // image files directly in this folder
 
-    var hasSubfolders: Bool { !children.isEmpty }
-    var hasPhotos: Bool { !photoFiles.isEmpty }
+    var hasSubfolders: Bool { !self.children.isEmpty }
+    var hasPhotos: Bool { !self.photoFiles.isEmpty }
 
     /// Total number of photos in this node and all descendants
     var totalPhotoCount: Int {
-        photoFiles.count + children.reduce(0) { $0 + $1.totalPhotoCount }
+        self.photoFiles.count + self.children.reduce(0) { $0 + $1.totalPhotoCount }
     }
 }
 

@@ -18,12 +18,12 @@ final class PhotoSyncViewModel {
     var totalPhotos: Int = 0
 
     var canSync: Bool {
-        selectedFolderURL != nil && !syncStatus.isActive
+        self.selectedFolderURL != nil && !self.syncStatus.isActive
     }
 
     var progressFraction: Double {
-        guard totalPhotos > 0 else { return 0 }
-        return Double(completedPhotos) / Double(totalPhotos)
+        guard self.totalPhotos > 0 else { return 0 }
+        return Double(self.completedPhotos) / Double(self.totalPhotos)
     }
 
     // MARK: - Folder Selection
@@ -37,24 +37,24 @@ final class PhotoSyncViewModel {
         panel.prompt = "Select"
 
         if panel.runModal() == .OK {
-            selectedFolderURL = panel.url
-            logEntries = []
-            syncStatus = .idle
-            completedPhotos = 0
-            totalPhotos = 0
+            self.selectedFolderURL = panel.url
+            self.logEntries = []
+            self.syncStatus = .idle
+            self.completedPhotos = 0
+            self.totalPhotos = 0
         }
     }
 
     // MARK: - Sync
 
     func startSync() {
-        guard let url = selectedFolderURL else { return }
+        guard let url = self.selectedFolderURL else { return }
 
         Task {
-            syncStatus = .scanning
-            logEntries = []
-            completedPhotos = 0
-            totalPhotos = 0
+            self.syncStatus = .scanning
+            self.logEntries = []
+            self.completedPhotos = 0
+            self.totalPhotos = 0
 
             let service = PhotoLibraryService()
             let engine = SyncEngine(
@@ -73,11 +73,11 @@ final class PhotoSyncViewModel {
 
             do {
                 try await engine.run(rootURL: url)
-                syncStatus = .completed
-                appendLog("Sync finished.", type: .success)
+                self.syncStatus = .completed
+                self.appendLog("Sync finished.", type: .success)
             } catch {
-                syncStatus = .failed(error.localizedDescription)
-                appendLog("Sync failed: \(error.localizedDescription)", type: .error)
+                self.syncStatus = .failed(error.localizedDescription)
+                self.appendLog("Sync failed: \(error.localizedDescription)", type: .error)
             }
         }
     }
@@ -85,6 +85,6 @@ final class PhotoSyncViewModel {
     // MARK: - Helpers
 
     private func appendLog(_ message: String, type: SyncLogEntry.LogType) {
-        logEntries.append(SyncLogEntry(message: message, type: type))
+        self.logEntries.append(SyncLogEntry(message: message, type: type))
     }
 }

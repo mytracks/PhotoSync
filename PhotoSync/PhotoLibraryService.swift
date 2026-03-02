@@ -21,13 +21,13 @@ struct PhotoLibraryService {
     /// Find a top-level user collection (folder or album) by title.
     func findTopLevelCollection(named name: String) -> PHCollection? {
         let result = PHCollectionList.fetchTopLevelUserCollections(with: nil)
-        return firstCollection(in: result, named: name)
+        return self.firstCollection(in: result, named: name)
     }
 
     /// Find a direct child collection inside `parent` by title.
     func findCollection(named name: String, in parent: PHCollectionList) -> PHCollection? {
         let result = PHCollection.fetchCollections(in: parent, options: nil)
-        return firstCollection(in: result, named: name)
+        return self.firstCollection(in: result, named: name)
     }
 
     private func firstCollection(in result: PHFetchResult<PHCollection>, named name: String) -> PHCollection? {
@@ -57,11 +57,11 @@ struct PhotoLibraryService {
     func findOrCreateFolder(named name: String, in parent: PHCollectionList?) async throws -> PHCollectionList {
         // Check existing
         if let parent = parent {
-            if let existing = findCollection(named: name, in: parent) as? PHCollectionList {
+            if let existing = self.findCollection(named: name, in: parent) as? PHCollectionList {
                 return existing
             }
         } else {
-            if let existing = findTopLevelCollection(named: name) as? PHCollectionList {
+            if let existing = self.findTopLevelCollection(named: name) as? PHCollectionList {
                 return existing
             }
         }
@@ -97,7 +97,7 @@ struct PhotoLibraryService {
     func findOrCreateAlbum(named name: String, in parent: PHCollectionList?) async throws -> PHAssetCollection {
         // Check existing
         if let parent = parent {
-            if let existing = findCollection(named: name, in: parent) as? PHAssetCollection {
+            if let existing = self.findCollection(named: name, in: parent) as? PHAssetCollection {
                 return existing
             }
         } else {

@@ -30,12 +30,12 @@ final class SyncEngine {
 
     func run(rootURL: URL) async throws {
         // 1. Request authorization
-        guard await photoService.requestAuthorization() else {
+        guard await self.photoService.requestAuthorization() else {
             throw SyncError.notAuthorized
         }
 
         // 2. Scan folder tree
-        log(.init(message: "Scanning \(rootURL.path)…", type: .info))
+        self.log(.init(message: "Scanning \(rootURL.path)…", type: .info))
         let scanner = FolderScanner()
         let tree: FolderNode
         do {
@@ -44,12 +44,12 @@ final class SyncEngine {
             throw SyncError.scanFailed(rootURL, error)
         }
 
-        totalPhotos = tree.totalPhotoCount
-        log(.init(message: "Found \(totalPhotos) photo(s) to process.", type: .info))
-        progress(0, totalPhotos)
+        self.totalPhotos = tree.totalPhotoCount
+        self.log(.init(message: "Found \(self.totalPhotos) photo(s) to process.", type: .info))
+        self.progress(0, self.totalPhotos)
 
         // 3. Sync
-        try await syncNode(tree, parentFolder: nil)
+        try await self.syncNode(tree, parentFolder: nil)
     }
 
     // MARK: - Recursive Sync
@@ -58,46 +58,46 @@ final class SyncEngine {
 
         // --- Folder with subfolders → create a Photos folder ---
         if node.hasSubfolders {
-            let folder = try await photoService.findOrCreateFolder(named: node.name, in: parentFolder)
+            let folder = try await self.photoService.findOrCreateFolder(named: node.name, in: parentFolder)
             let isNew = folder.localizedTitle == node.name  // always true, just for clarity
-            log(.init(
+            self.log(.init(
                 message: "\(isNew ? "Folder" : "Folder (exists)"): \(node.name)",
                 type: .info
             ))
 
             for child in node.children {
-                try await syncNode(child, parentFolder: folder)
+                try await self.syncNode(child, parentFolder: folder)
             }
         }
 
         // --- Folder with photos → create a Photos album ---
         if node.hasPhotos {
-            let album = try await photoService.findOrCreateAlbum(named: node.name, in: parentFolder)
-            log(.init(message: "Album '\(node.name)' — \(node.photoFiles.count) photo(s)", type: .info))
+            let album = try await self.photoService.findOrCreateAlbum(named: node.name, in: parentFolder)
+            self.log(.init(message: "Album '\(node.name)' — \(node.photoFiles.count) photo(s)", type: .info))
 
-            let existing = photoService.existingFilenames(in: album)
+            let existing = self.photoService.existingFilenames(in: album)
 
             for photoURL in node.photoFiles {
                 let filename = photoURL.lastPathComponent
                 if existing.contains(filename) {
-                    log(.init(message: "  Skip (exists): \(filename)", type: .info))
-                    processedPhotos += 1
-                    progress(processedPhotos, totalPhotos)
+                    self.log(.init(message: "  Skip (exists): \(filename)", type: .info))
+                    self.processedPhotos += 1
+                    self.progress(self.processedPhotos, self.totalPhotos)
                     continue
                 }
 
                 do {
-                    try await photoService.addPhoto(at: photoURL, to: album, existingFilenames: existing)
-                    log(.init(message: "  Added: \(filename)", type: .success))
+                    try await self.photoService.addPhoto(at: photoURL, to: album, existingFilenames: existing)
+                    self.log(.init(message: "  Added: \(filename)", type: .success))
                 } catch {
-                    log(.init(
+                    self.log(.init(
                         message: "  Error adding \(filename): \(error.localizedDescription)",
                         type: .error
                     ))
                 }
 
-                processedPhotos += 1
-                progress(processedPhotos, totalPhotos)
+                self.processedPhotos += 1
+                self.progress(self.processedPhotos, self.totalPhotos)
             }
         }
     }
