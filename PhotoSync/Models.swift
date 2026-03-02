@@ -29,6 +29,7 @@ enum SyncStatus: Equatable {
     case scanning
     case syncing
     case completed
+    case cancelled
     case failed(String)
 
     var isActive: Bool {
@@ -44,6 +45,7 @@ enum SyncStatus: Equatable {
         case .scanning: return "Scanning folder…"
         case .syncing: return "Syncing…"
         case .completed: return "Sync completed"
+        case .cancelled: return "Cancelled"
         case .failed(let msg): return "Failed: \(msg)"
         }
     }

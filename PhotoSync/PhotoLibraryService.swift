@@ -18,6 +18,28 @@ struct PhotoLibraryService {
 
     // MARK: - Lookup
 
+    /// Fetch all top-level `PHCollectionList` (folder) items in the Photos library.
+    func fetchTopLevelFolders() -> [PHCollectionList] {
+        let result = PHCollectionList.fetchTopLevelUserCollections(with: nil)
+        return self.collectFolders(from: result)
+    }
+
+    /// Fetch direct child `PHCollectionList` (sub-folder) items inside `parent`.
+    func fetchSubfolders(in parent: PHCollectionList) -> [PHCollectionList] {
+        let result = PHCollection.fetchCollections(in: parent, options: nil)
+        return self.collectFolders(from: result)
+    }
+
+    private func collectFolders(from result: PHFetchResult<PHCollection>) -> [PHCollectionList] {
+        var folders: [PHCollectionList] = []
+        for i in 0..<result.count {
+            if let folder = result[i] as? PHCollectionList {
+                folders.append(folder)
+            }
+        }
+        return folders
+    }
+
     /// Find a top-level user collection (folder or album) by title.
     func findTopLevelCollection(named name: String) -> PHCollection? {
         let result = PHCollectionList.fetchTopLevelUserCollections(with: nil)

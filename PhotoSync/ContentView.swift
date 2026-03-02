@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Photos
 
 struct ContentView: View {
 
@@ -53,6 +54,38 @@ struct ContentView: View {
             }
             .padding()
 
+            // MARK: Library Folder Selection
+            GroupBox {
+                HStack(spacing: 12) {
+                    Button("Choose Library Folder…") {
+                        self.viewModel.selectLibraryFolder()
+                    }
+                    .disabled(self.viewModel.syncStatus.isActive)
+
+                    if let title = self.viewModel.selectedLibraryFolderTitle {
+                        Label(title, systemImage: "photo.on.rectangle")
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Button("Clear") {
+                            self.viewModel.clearLibraryFolder()
+                        }
+                        .foregroundStyle(.secondary)
+                        .disabled(self.viewModel.syncStatus.isActive)
+                    } else {
+                        Text("Photo Library Root")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            } label: {
+                Label("Target in Photo Library", systemImage: "rectangle.stack.badge.person.crop")
+                    .font(.headline)
+            }
+            .padding([.horizontal, .bottom])
+
             // MARK: Sync Controls
             HStack(alignment: .center, spacing: 16) {
                 Button {
@@ -62,6 +95,15 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!self.viewModel.canSync)
+
+                if self.viewModel.syncStatus.isActive {
+                    Button(role: .destructive) {
+                        self.viewModel.cancelSync()
+                    } label: {
+                        Label("Cancel", systemImage: "stop.circle")
+                    }
+                    .buttonStyle(.bordered)
+                }
 
                 Spacer()
 
@@ -73,7 +115,7 @@ struct ContentView: View {
             .padding(.bottom, 8)
 
             // MARK: Progress Bar
-            if self.viewModel.syncStatus.isActive || self.viewModel.syncStatus == .completed {
+            if self.viewModel.syncStatus.isActive || self.viewModel.syncStatus == .completed || self.viewModel.syncStatus == .cancelled {
                 VStack(alignment: .leading, spacing: 4) {
                     ProgressView(value: self.viewModel.progressFraction)
                         .progressViewStyle(.linear)
@@ -117,6 +159,18 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 600, minHeight: 480)
+        .sheet(isPresented: self.$viewModel.showingLibraryFolderPicker) {
+            LibraryFolderPickerView(
+                folders: self.viewModel.availableLibraryFolders,
+                onSelect: { folder in
+                    self.viewModel.selectedLibraryFolder = folder
+                    self.viewModel.showingLibraryFolderPicker = false
+                },
+                onCancel: {
+                    self.viewModel.showingLibraryFolderPicker = false
+                }
+            )
+        }
     }
 
     // MARK: - Helpers
@@ -124,6 +178,7 @@ struct ContentView: View {
     private var statusColor: Color {
         switch self.viewModel.syncStatus {
         case .completed: return .green
+        case .cancelled: return .orange
         case .failed: return .red
         default: return .secondary
         }
@@ -141,4 +196,81 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+// MARK: - Library Folder Picker
+
+struct LibraryFolderPickerView: View {
+
+    let folders: [PHCollectionList]
+    let onSelect: (PHCollectionList) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            FolderLevelView(folders: self.folders, onSelect: self.onSelect)
+                .navigationTitle("Select Target Folder")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { self.onCancel() }
+                            .keyboardShortcut(.cancelAction)
+                    }
+                }
+        }
+        .frame(minWidth: 320, minHeight: 320)
+    }
+}
+
+// MARK: - Folder Level
+
+struct FolderLevelView: View {
+
+    let folders: [PHCollectionList]
+    let onSelect: (PHCollectionList) -> Void
+
+    var body: some View {
+        if self.folders.isEmpty {
+            Text("No folders found.")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            List(self.folders, id: \.localIdentifier) { folder in
+                FolderRowView(folder: folder, onSelect: self.onSelect)
+            }
+        }
+    }
+}
+
+// MARK: - Folder Row
+
+struct FolderRowView: View {
+
+    let folder: PHCollectionList
+    let onSelect: (PHCollectionList) -> Void
+
+    private let service = PhotoLibraryService()
+
+    private var children: [PHCollectionList] {
+        self.service.fetchSubfolders(in: self.folder)
+    }
+
+    var body: some View {
+        HStack {
+            if self.children.isEmpty {
+                Label(self.folder.localizedTitle ?? "Unnamed", systemImage: "folder")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                NavigationLink {
+                    FolderLevelView(folders: self.children, onSelect: self.onSelect)
+                        .navigationTitle(self.folder.localizedTitle ?? "Unnamed")
+                } label: {
+                    Label(self.folder.localizedTitle ?? "Unnamed", systemImage: "folder")
+                }
+            }
+
+            Button("Select") { self.onSelect(self.folder) }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.tint)
+        }
+    }
 }

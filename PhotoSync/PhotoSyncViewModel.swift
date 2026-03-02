@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import Photos
 
 @Observable
 final class PhotoSyncViewModel {
@@ -17,6 +18,24 @@ final class PhotoSyncViewModel {
     var completedPhotos: Int = 0
     var totalPhotos: Int = 0
 
+    // MARK: - Library Folder State
+
+    /// The Photos library folder (PHCollectionList) to use as the sync root.
+    /// When `nil` the library root is used.
+    var selectedLibraryFolder: PHCollectionList?
+
+    var selectedLibraryFolderTitle: String? {
+        self.selectedLibraryFolder?.localizedTitle
+    }
+
+    /// Controls whether the library folder picker sheet is shown.
+    var showingLibraryFolderPicker: Bool = false
+
+    /// Top-level PHCollectionList items fetched before showing the picker.
+    var availableLibraryFolders: [PHCollectionList] = []
+
+    // MARK: - Derived
+
     var canSync: Bool {
         self.selectedFolderURL != nil && !self.syncStatus.isActive
     }
@@ -26,7 +45,7 @@ final class PhotoSyncViewModel {
         return Double(self.completedPhotos) / Double(self.totalPhotos)
     }
 
-    // MARK: - Folder Selection
+    // MARK: - Source Folder Selection
 
     func selectFolder() {
         let panel = NSOpenPanel()
@@ -45,16 +64,45 @@ final class PhotoSyncViewModel {
         }
     }
 
+    // MARK: - Library Folder Selection
+
+    /// Requests Photos authorization, fetches available top-level folders
+    /// and presents the picker sheet.
+    func selectLibraryFolder() {
+        Task {
+            let service = PhotoLibraryService()
+            let authorized = await service.requestAuthorization()
+            guard authorized else { return }
+            self.availableLibraryFolders = service.fetchTopLevelFolders()
+            self.showingLibraryFolderPicker = true
+        }
+    }
+
+    /// Clears the selected library folder, reverting to the library root.
+    func clearLibraryFolder() {
+        self.selectedLibraryFolder = nil
+    }
+
     // MARK: - Sync
+
+    private var syncTask: Task<Void, Never>?
 
     func startSync() {
         guard let url = self.selectedFolderURL else { return }
 
-        Task {
+        let libraryFolder = self.selectedLibraryFolder
+
+        self.syncTask = Task {
             self.syncStatus = .scanning
             self.logEntries = []
             self.completedPhotos = 0
             self.totalPhotos = 0
+
+            if let folderTitle = libraryFolder?.localizedTitle {
+                self.appendLog("Target library folder: \(folderTitle)", type: .info)
+            } else {
+                self.appendLog("Target: Photo Library root", type: .info)
+            }
 
             let service = PhotoLibraryService()
             let engine = SyncEngine(
@@ -72,14 +120,22 @@ final class PhotoSyncViewModel {
             )
 
             do {
-                try await engine.run(rootURL: url)
+                try await engine.run(rootURL: url, baseFolder: libraryFolder)
                 self.syncStatus = .completed
                 self.appendLog("Sync finished.", type: .success)
+            } catch is CancellationError {
+                self.syncStatus = .cancelled
+                self.appendLog("Sync cancelled.", type: .warning)
             } catch {
                 self.syncStatus = .failed(error.localizedDescription)
                 self.appendLog("Sync failed: \(error.localizedDescription)", type: .error)
             }
         }
+    }
+
+    func cancelSync() {
+        self.syncTask?.cancel()
+        self.syncTask = nil
     }
 
     // MARK: - Helpers

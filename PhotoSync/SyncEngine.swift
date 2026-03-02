@@ -28,7 +28,12 @@ final class SyncEngine {
 
     // MARK: - Entry Point
 
-    func run(rootURL: URL) async throws {
+    /// Run the sync.
+    /// - Parameters:
+    ///   - rootURL:    The local folder to sync.
+    ///   - baseFolder: The Photos library folder to use as the sync root.
+    ///                 Pass `nil` to target the top level of the library.
+    func run(rootURL: URL, baseFolder: PHCollectionList? = nil) async throws {
         // 1. Request authorization
         guard await self.photoService.requestAuthorization() else {
             throw SyncError.notAuthorized
@@ -48,8 +53,17 @@ final class SyncEngine {
         self.log(.init(message: "Found \(self.totalPhotos) photo(s) to process.", type: .info))
         self.progress(0, self.totalPhotos)
 
-        // 3. Sync
-        try await self.syncNode(tree, parentFolder: nil)
+        // 3. Sync the *contents* of the root folder directly under baseFolder,
+        //    without creating a Photos item for the root folder itself.
+        for child in tree.children {
+            try Task.checkCancellation()
+            try await self.syncNode(child, parentFolder: baseFolder)
+        }
+        if tree.hasPhotos {
+            try Task.checkCancellation()
+            // Photos sitting directly in the root go into an album named after the root folder.
+            try await self.syncPhotos(tree.photoFiles, albumName: tree.name, in: baseFolder)
+        }
     }
 
     // MARK: - Recursive Sync
@@ -59,46 +73,48 @@ final class SyncEngine {
         // --- Folder with subfolders → create a Photos folder ---
         if node.hasSubfolders {
             let folder = try await self.photoService.findOrCreateFolder(named: node.name, in: parentFolder)
-            let isNew = folder.localizedTitle == node.name  // always true, just for clarity
-            self.log(.init(
-                message: "\(isNew ? "Folder" : "Folder (exists)"): \(node.name)",
-                type: .info
-            ))
+            self.log(.init(message: "Folder: \(node.name)", type: .info))
 
             for child in node.children {
+                try Task.checkCancellation()
                 try await self.syncNode(child, parentFolder: folder)
             }
         }
 
         // --- Folder with photos → create a Photos album ---
         if node.hasPhotos {
-            let album = try await self.photoService.findOrCreateAlbum(named: node.name, in: parentFolder)
-            self.log(.init(message: "Album '\(node.name)' — \(node.photoFiles.count) photo(s)", type: .info))
+            try await self.syncPhotos(node.photoFiles, albumName: node.name, in: parentFolder)
+        }
+    }
 
-            let existing = self.photoService.existingFilenames(in: album)
+    private func syncPhotos(_ photoFiles: [URL], albumName: String, in parent: PHCollectionList?) async throws {
+        let album = try await self.photoService.findOrCreateAlbum(named: albumName, in: parent)
+        self.log(.init(message: "Album '\(albumName)' — \(photoFiles.count) photo(s)", type: .info))
 
-            for photoURL in node.photoFiles {
-                let filename = photoURL.lastPathComponent
-                if existing.contains(filename) {
-                    self.log(.init(message: "  Skip (exists): \(filename)", type: .info))
-                    self.processedPhotos += 1
-                    self.progress(self.processedPhotos, self.totalPhotos)
-                    continue
-                }
+        let existing = self.photoService.existingFilenames(in: album)
 
-                do {
-                    try await self.photoService.addPhoto(at: photoURL, to: album, existingFilenames: existing)
-                    self.log(.init(message: "  Added: \(filename)", type: .success))
-                } catch {
-                    self.log(.init(
-                        message: "  Error adding \(filename): \(error.localizedDescription)",
-                        type: .error
-                    ))
-                }
-
+        for photoURL in photoFiles {
+            try Task.checkCancellation()
+            let filename = photoURL.lastPathComponent
+            if existing.contains(filename) {
+                self.log(.init(message: "  Skip (exists): \(filename)", type: .info))
                 self.processedPhotos += 1
                 self.progress(self.processedPhotos, self.totalPhotos)
+                continue
             }
+
+            do {
+                try await self.photoService.addPhoto(at: photoURL, to: album, existingFilenames: existing)
+                self.log(.init(message: "  Added: \(filename)", type: .success))
+            } catch {
+                self.log(.init(
+                    message: "  Error adding \(filename): \(error.localizedDescription)",
+                    type: .error
+                ))
+            }
+
+            self.processedPhotos += 1
+            self.progress(self.processedPhotos, self.totalPhotos)
         }
     }
 }
