@@ -1,5 +1,5 @@
 //
-//  PhotoSyncViewModel.swift
+//  Folder2LibraryViewModel.swift
 //  PhotoSync
 //
 
@@ -8,7 +8,7 @@ import SwiftUI
 import Photos
 
 @Observable
-final class PhotoSyncViewModel {
+final class Folder2LibraryViewModel {
 
     // MARK: - State
 
