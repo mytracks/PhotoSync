@@ -158,7 +158,6 @@ struct Folder2LibraryView: View {
                 }
             }
         }
-        .frame(minWidth: 600, minHeight: 480)
         .sheet(isPresented: self.$viewModel.showingLibraryFolderPicker) {
             LibraryFolderPickerView(
                 folders: self.viewModel.availableLibraryFolders,

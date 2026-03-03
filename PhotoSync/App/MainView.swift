@@ -15,8 +15,9 @@ struct MainView: View {
                 Folder2LibraryView()
             }
             Tab("Lightroom 􀰑 Folder", systemImage: "l.square") {
-                Text("Lightroom 􀰑 Folder")
+                Lightroom2FolderView()
             }
         }
+        .frame(minWidth: 600, minHeight: 480)
     }
 }
