@@ -105,7 +105,7 @@ final class PhotoSyncViewModel {
             }
 
             let service = PhotoLibraryService()
-            let engine = SyncEngine(
+            let engine = FolderToLibrarySyncEngine(
                 photoService: service,
                 log: { [weak self] entry in
                     self?.logEntries.append(entry)

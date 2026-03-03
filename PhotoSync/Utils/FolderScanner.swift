@@ -6,7 +6,6 @@
 import Foundation
 
 struct FolderScanner {
-
     static let imageExtensions: Set<String> = [
         "jpg", "jpeg", "png", "heic", "heif",
         "tiff", "tif", "gif", "bmp",

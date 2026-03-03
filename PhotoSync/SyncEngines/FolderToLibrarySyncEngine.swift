@@ -1,5 +1,5 @@
 //
-//  SyncEngine.swift
+//  FolderToLibrarySyncEngine.swift
 //  PhotoSync
 //
 
@@ -7,8 +7,7 @@ import Foundation
 import Photos
 
 /// Coordinates scanning and syncing a folder tree into the Photos library.
-final class SyncEngine {
-
+final class FolderToLibrarySyncEngine {
     private let photoService: PhotoLibraryService
     private let log: (SyncLogEntry) -> Void
     private let progress: (Int, Int) -> Void  // (completed, total)

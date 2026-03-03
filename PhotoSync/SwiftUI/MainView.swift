@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  MainView.swift
 //  PhotoSync
 //
 //  Created by Dirk Stichling on 02.03.26.
@@ -8,8 +8,7 @@
 import SwiftUI
 import Photos
 
-struct ContentView: View {
-
+struct MainView: View {
     @State private var viewModel = PhotoSyncViewModel()
 
     var body: some View {
@@ -88,21 +87,22 @@ struct ContentView: View {
 
             // MARK: Sync Controls
             HStack(alignment: .center, spacing: 16) {
-                Button {
-                    self.viewModel.startSync()
-                } label: {
-                    Label("Sync to Photos", systemImage: "arrow.triangle.2.circlepath")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!self.viewModel.canSync)
-
                 if self.viewModel.syncStatus.isActive {
                     Button(role: .destructive) {
                         self.viewModel.cancelSync()
                     } label: {
                         Label("Cancel", systemImage: "stop.circle")
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                }
+                else {
+                    Button {
+                        self.viewModel.startSync()
+                    } label: {
+                        Label("Sync to Photos", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!self.viewModel.canSync)
                 }
 
                 Spacer()
@@ -195,82 +195,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
-}
-
-// MARK: - Library Folder Picker
-
-struct LibraryFolderPickerView: View {
-
-    let folders: [PHCollectionList]
-    let onSelect: (PHCollectionList) -> Void
-    let onCancel: () -> Void
-
-    var body: some View {
-        NavigationStack {
-            FolderLevelView(folders: self.folders, onSelect: self.onSelect)
-                .navigationTitle("Select Target Folder")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { self.onCancel() }
-                            .keyboardShortcut(.cancelAction)
-                    }
-                }
-        }
-        .frame(minWidth: 320, minHeight: 320)
-    }
-}
-
-// MARK: - Folder Level
-
-struct FolderLevelView: View {
-
-    let folders: [PHCollectionList]
-    let onSelect: (PHCollectionList) -> Void
-
-    var body: some View {
-        if self.folders.isEmpty {
-            Text("No folders found.")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else {
-            List(self.folders, id: \.localIdentifier) { folder in
-                FolderRowView(folder: folder, onSelect: self.onSelect)
-            }
-        }
-    }
-}
-
-// MARK: - Folder Row
-
-struct FolderRowView: View {
-
-    let folder: PHCollectionList
-    let onSelect: (PHCollectionList) -> Void
-
-    private let service = PhotoLibraryService()
-
-    private var children: [PHCollectionList] {
-        self.service.fetchSubfolders(in: self.folder)
-    }
-
-    var body: some View {
-        HStack {
-            if self.children.isEmpty {
-                Label(self.folder.localizedTitle ?? "Unnamed", systemImage: "folder")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                NavigationLink {
-                    FolderLevelView(folders: self.children, onSelect: self.onSelect)
-                        .navigationTitle(self.folder.localizedTitle ?? "Unnamed")
-                } label: {
-                    Label(self.folder.localizedTitle ?? "Unnamed", systemImage: "folder")
-                }
-            }
-
-            Button("Select") { self.onSelect(self.folder) }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.tint)
-        }
-    }
+    MainView()
 }
