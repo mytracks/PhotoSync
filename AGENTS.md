@@ -20,6 +20,10 @@ In general this should be an update process. That means, before the app creates 
 
 In this use-case the user selects a folder from Adobe Lightroom CC (the cloud variant) as the source. And they select a local folder as the target. Then the app exports the photos of the folder (including subfolders) as JPG files to the local filesystem folder.
 
+## Implementation Aspects
+
+To access the photos, folders etc. from Lightroom CC use a corresponding Cloud API and not any local files or a locally installed Lightroom. In the future, this app will be ported to iOS/iPadOS as well and accessing the data from Lightroom should be reusable.
+
 # Swift Coding Style
 
 Whenever a method or a property of the current class, struct, enum etc. is used, then `self.` shoulf preceed the method/property to indicate that it is a member.

@@ -267,6 +267,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"info.stichling.PhotoSync.oauth\";\n    CFBundleURLSchemes =     (\n        photosync\n    );\n}";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PhotoSync needs access to your Photos library to create folders and albums.";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -301,6 +302,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"info.stichling.PhotoSync.oauth\";\n    CFBundleURLSchemes =     (\n        photosync\n    );\n}";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PhotoSync needs access to your Photos library to create folders and albums.";
 				LD_RUNPATH_SEARCH_PATHS = (
