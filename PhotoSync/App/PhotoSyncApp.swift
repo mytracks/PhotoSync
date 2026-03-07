@@ -13,6 +13,7 @@ struct PhotoSyncApp: App {
     let authManager: AdobeAuthManager
     let lightroomConnector: LightroomConnector
     let lightroomSourceProvider: LightroomSourceProvider
+    let filesystemTargetProvider: FilesystemTargetProvider
     let syncEngine: SyncEngine
     
     init() {
@@ -20,6 +21,7 @@ struct PhotoSyncApp: App {
         self.lightroomConnector = .init()
         self.lightroomSourceProvider = .init(authManager: self.authManager, lightroomConnector: self.lightroomConnector)
         self.syncEngine = SyncEngine()
+        self.filesystemTargetProvider = .init()
     }
     
     var body: some Scene {
@@ -29,6 +31,7 @@ struct PhotoSyncApp: App {
         .environment(self.authManager)
         .environment(self.lightroomConnector)
         .environment(self.lightroomSourceProvider)
+        .environment(self.filesystemTargetProvider)
         .environment(self.syncEngine)
         
 #if canImport(WebKit)

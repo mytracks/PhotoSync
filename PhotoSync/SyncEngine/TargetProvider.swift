@@ -13,6 +13,5 @@ protocol TargetConfiguration {
 protocol TargetProvider {
     associatedtype Configuration: TargetConfiguration
 
-    func saveJpeg(data: Data, fileName: String) async throws
-    
+    func save(data: Data, fileName: String, configuration: Configuration) async throws
 }

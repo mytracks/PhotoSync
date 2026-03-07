@@ -10,6 +10,7 @@ import SwiftUI
 struct Lightroom2FolderView: View {
     @Environment(AdobeAuthManager.self) var authManager
     @Environment(LightroomSourceProvider.self) var sourceProvider
+    @Environment(FilesystemTargetProvider.self) var targetProvider
     @Environment(SyncEngine.self) var syncEngine
 
     @State private var selectedAlbum: Album? = nil
@@ -52,9 +53,14 @@ struct Lightroom2FolderView: View {
                     }
                     
                     Button("Sync") {
-                        if let selectedAlbum {
-                            let configuration = LightroomSourceConfiguration(rootAlbum: selectedAlbum)
-                            self.syncEngine.sync(sourceProvider: self.sourceProvider, sourceConfiguration: configuration)
+                        if let selectedAlbum, let targetFolder {
+                            let sourceConfiguration = LightroomSourceConfiguration(rootAlbum: selectedAlbum)
+                            let targetConfiguration = FilesystemTargetConfiguration(rootDirectory: targetFolder)
+                            self.syncEngine.sync(
+                                sourceProvider: self.sourceProvider,
+                                sourceConfiguration: sourceConfiguration,
+                                targetProvider: self.targetProvider,
+                                targetConfiguration: targetConfiguration)
                         }
                     }
                     .disabled(self.selectedAlbum == nil || self.targetFolder == nil)
