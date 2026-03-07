@@ -6,12 +6,35 @@
 //
 
 import SwiftUI
+import OAuthKit
 
 @main
 struct PhotoSyncApp: App {
+    let authManager: AdobeAuthManager
+    let lightroomConnector: LightroomConnector
+    let lightroomSourceProvider: LightroomSourceProvider
+    let syncEngine: SyncEngine
+    
+    init() {
+        self.authManager = .init()
+        self.lightroomConnector = .init()
+        self.lightroomSourceProvider = .init(authManager: self.authManager, lightroomConnector: self.lightroomConnector)
+        self.syncEngine = SyncEngine()
+    }
+    
     var body: some Scene {
         WindowGroup {
             MainView()
         }
+        .environment(self.authManager)
+        .environment(self.lightroomConnector)
+        .environment(self.lightroomSourceProvider)
+        .environment(self.syncEngine)
+        
+#if canImport(WebKit)
+        WindowGroup(id: "oauth") {
+            OAWebView(oauth: self.authManager.oauth)
+        }
+#endif
     }
 }

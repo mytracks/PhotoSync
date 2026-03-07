@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CF59D0342F59E6CC008E77A4 /* OAuthKit in Frameworks */ = {isa = PBXBuildFile; productRef = CF59D0332F59E6CC008E77A4 /* OAuthKit */; };
 		CF5F4501FF55FF0D0037C671 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF5F4500FF55FF0D0037C671 /* Photos.framework */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CF5F4501FF55FF0D0037C671 /* Photos.framework in Frameworks */,
+				CF59D0342F59E6CC008E77A4 /* OAuthKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +74,7 @@
 			);
 			name = PhotoSync;
 			packageProductDependencies = (
+				CF59D0332F59E6CC008E77A4 /* OAuthKit */,
 			);
 			productName = PhotoSync;
 			productReference = CF5F44912F55FF0D0037C671 /* PhotoSync.app */;
@@ -101,6 +104,9 @@
 			);
 			mainGroup = CF5F44882F55FF0D0037C671;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CF59D0322F59E6CC008E77A4 /* XCRemoteSwiftPackageReference "OAuthKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CF5F44922F55FF0D0037C671 /* Products */;
 			projectDirPath = "";
@@ -344,6 +350,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CF59D0322F59E6CC008E77A4 /* XCRemoteSwiftPackageReference "OAuthKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/codefiesta/OAuthKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CF59D0332F59E6CC008E77A4 /* OAuthKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CF59D0322F59E6CC008E77A4 /* XCRemoteSwiftPackageReference "OAuthKit" */;
+			productName = OAuthKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CF5F44892F55FF0D0037C671 /* Project object */;
 }

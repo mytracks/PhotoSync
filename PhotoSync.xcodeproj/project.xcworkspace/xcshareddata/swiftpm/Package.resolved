@@ -1,0 +1,15 @@
+{
+  "originHash" : "554b0a051b6488645455eac6ddaf0978be24494bf037b1692daa9e330257ea3a",
+  "pins" : [
+    {
+      "identity" : "oauthkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/codefiesta/OAuthKit",
+      "state" : {
+        "revision" : "6b852ad99463e4e1046ec7de609d5aa777a21c6f",
+        "version" : "2.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}
