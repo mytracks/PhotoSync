@@ -14,14 +14,14 @@ enum LightroomConnectorError: Error {
 @MainActor
 @Observable
 class LightroomConnector {
-    public private(set) var lightroomCatalog: Catalog?
-    private var albumDict = [String : Album]()
-    public private(set) var rootAlbums: [Album] = []
+    public private(set) var lightroomCatalog: LightroomCatalog?
+    private var albumDict = [String : LightroomAlbum]()
+    public private(set) var rootAlbums: [LightroomAlbum] = []
 
-    public private(set) var albumAssetsDict = [String : [AlbumAsset]]()
-    public private(set) var assetsDict = [String : Asset]()
+    public private(set) var albumAssetsDict = [String : [LightroomAlbumAsset]]()
+    public private(set) var assetsDict = [String : LightroomAsset]()
     
-    public private(set) var albums = [Album]()
+    public private(set) var albums = [LightroomAlbum]()
     
     public func loadAlbums(authManager: AdobeAuthManager) async {
         guard let accessToken = authManager.accessToken else { return }
@@ -32,8 +32,7 @@ class LightroomConnector {
         let client = LightroomAPIClient(accessToken: accessToken)
         
         if let albums = try? await client.getAlbums(catalogId: lightroomCatalog.id) {
-            self.albumDict = albums.reduce(into: [String : Album]()) { dict, album in
-//                if album.subtype
+            self.albumDict = albums.reduce(into: [String : LightroomAlbum]()) { dict, album in
                 dict[album.id] = album
             }
             
@@ -43,7 +42,7 @@ class LightroomConnector {
         }
     }
     
-    public func getAlbumAssets(authManager: AdobeAuthManager, album: Album) async -> [AlbumAsset] {
+    public func getAlbumAssets(authManager: AdobeAuthManager, album: LightroomAlbum) async -> [LightroomAlbumAsset] {
         guard let accessToken = authManager.accessToken else { return [] }
         await loadCatalog(authManager: authManager)
         guard let lightroomCatalog else { return [] }
@@ -59,7 +58,7 @@ class LightroomConnector {
         return self.albumAssetsDict[album.id] ?? []
     }
     
-    public func getAssets(authManager: AdobeAuthManager, assetIds: [String]) async -> [Asset] {
+    public func getAssets(authManager: AdobeAuthManager, assetIds: [String]) async -> [LightroomAsset] {
         guard let accessToken = authManager.accessToken else { return [] }
         await loadCatalog(authManager: authManager)
         guard let lightroomCatalog else { return [] }
@@ -77,7 +76,7 @@ class LightroomConnector {
         return assetIds.compactMap({self.assetsDict[$0]})
     }
     
-    public func getAssets(authManager: AdobeAuthManager, album: Album) async -> [Asset] {
+    public func getAssets(authManager: AdobeAuthManager, album: LightroomAlbum) async -> [LightroomAsset] {
         let albumAssets = await self.getAlbumAssets(authManager: authManager, album: album)
         let assets = await self.getAssets(authManager: authManager, assetIds: albumAssets.map(\.id))
         return assets
@@ -109,7 +108,7 @@ class LightroomConnector {
         self.rootAlbums = self.albums.filter({ $0.parentId == nil })
     }
     
-    public func generateFullsizeRendition(authManager: AdobeAuthManager, asset: Asset) async throws {
+    public func generateFullsizeRendition(authManager: AdobeAuthManager, asset: LightroomAsset) async throws {
         guard let accessToken = authManager.accessToken else { return }
         guard let lightroomCatalog else { return }
 
@@ -118,7 +117,7 @@ class LightroomConnector {
         try await client.generateFullsizeRenditions(catalogId: lightroomCatalog.id, assetId: asset.id)
     }
     
-    public func getFullsizeRendition(authManager: AdobeAuthManager, asset: Asset) async throws -> Data {
+    public func getFullsizeRendition(authManager: AdobeAuthManager, asset: LightroomAsset) async throws -> Data {
         guard let accessToken = authManager.accessToken else { throw LightroomConnectorError.general("no access token") }
         guard let lightroomCatalog else { throw LightroomConnectorError.general("no catalog") }
 

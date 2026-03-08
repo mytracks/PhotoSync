@@ -18,13 +18,23 @@ class LightroomAPIClient {
         self.accessToken = accessToken
     }
     
-    private func makeSingleGetRequest(url: URL, contentType: String? = "application/json") async throws -> Data {
+    private func makeSingleGetRequest(
+        url: URL,
+        contentType: String? = "application/json",
+        additionalHeaders: [String:String]? = nil
+    ) async throws -> Data {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(self.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(Self.clientId, forHTTPHeaderField: "X-API-Key")
         request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         
+        if let additionalHeaders = additionalHeaders {
+            for (key, value) in additionalHeaders {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
+
         let (data, response) = try await URLSession.shared.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -51,12 +61,17 @@ class LightroomAPIClient {
         return cleanedData
     }
 
-    private func makeSinglePostRequest(url: URL, body: Data? = nil, additionalHeaders: [String:String]? = nil) async throws -> Data {
+    private func makeSinglePostRequest(
+        url: URL,
+        body: Data? = nil,
+        contentType: String? = "application/json",
+        additionalHeaders: [String:String]? = nil
+    ) async throws -> Data {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(self.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue(Self.clientId, forHTTPHeaderField: "X-API-Key")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         
         if let additionalHeaders = additionalHeaders {
             for (key, value) in additionalHeaders {
@@ -94,18 +109,34 @@ class LightroomAPIClient {
         return cleanedData
     }
 
-    private func loadResources(endpoint: String) async throws -> [[String: Any]] {
+    private func loadResources(
+        endpoint: String,
+        contentType: String? = "application/json",
+        additionalHeaders: [String:String]? = nil
+    ) async throws -> [[String: Any]] {
         guard let url = URL(string: "\(Self.baseURL)/\(endpoint)") else { return .init() }
 
-        return try await loadResources(url: url)
+        return try await loadResources(
+            url: url,
+            contentType: contentType,
+            additionalHeaders: additionalHeaders
+        )
     }
     
-    private func loadResources(url: URL) async throws -> [[String: Any]] {
+    private func loadResources(
+        url: URL,
+        contentType: String? = "application/json",
+        additionalHeaders: [String:String]? = nil
+    ) async throws -> [[String: Any]] {
         var nextURL: URL? = url
         var allResources: [[String: Any]] = []
 
         while let url = nextURL {
-            let data = try await makeSingleGetRequest(url: url)
+            let data = try await makeSingleGetRequest(
+                url: url,
+                contentType: contentType,
+                additionalHeaders: additionalHeaders
+            )
             nextURL = nil
             
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -126,7 +157,7 @@ class LightroomAPIClient {
         return allResources
     }
     
-    func getCatalog() async throws -> Catalog? {
+    func getCatalog() async throws -> LightroomCatalog? {
         guard let url = URL(string: "\(Self.baseURL)/catalog") else { return nil }
         
         let data = try await makeSingleGetRequest(url: url)
@@ -135,25 +166,25 @@ class LightroomAPIClient {
             return nil
         }
         
-        return Catalog.from(json: json)
+        return LightroomCatalog.from(json: json)
     }
     
-    func getAlbumAssets(catalogId: String, albumId: String) async throws -> [AlbumAsset] {
+    func getAlbumAssets(catalogId: String, albumId: String) async throws -> [LightroomAlbumAsset] {
         let assets = try await loadResources(endpoint: "catalogs/\(catalogId)/albums/\(albumId)/assets")
         
-        return AlbumAsset.list(from: assets, albumId: albumId)
+        return LightroomAlbumAsset.list(from: assets, albumId: albumId)
     }
     
     /// Example: Get assets from a catalog
     /// Implement this when you're ready to add functionality
-    func getAlbums(catalogId: String) async throws -> [Album] {
+    func getAlbums(catalogId: String) async throws -> [LightroomAlbum] {
         let albums = try await loadResources(endpoint: "catalogs/\(catalogId)/albums")
         
-        return Album.list(from: albums)
+        return LightroomAlbum.list(from: albums)
     }
     
-    func getAssets(catalogId: String, assetIds: [String]) async throws -> [Asset] {
-        var assets = [Asset]()
+    func getAssets(catalogId: String, assetIds: [String]) async throws -> [LightroomAsset] {
+        var assets = [LightroomAsset]()
         var assetIdsToBeProcessed = assetIds
         
         while assetIdsToBeProcessed.count > 0 {
@@ -162,7 +193,7 @@ class LightroomAPIClient {
             assetIdsToBeProcessed = Array(assetIdsToBeProcessed[count...])
             
             let assetIdsString = nextAssetIds.joined(separator: ",")
-            assets.append(contentsOf: Asset.list(from:try await loadResources(endpoint: "catalogs/\(catalogId)/assets?asset_ids=\(assetIdsString)")))
+            assets.append(contentsOf: LightroomAsset.list(from:try await loadResources(endpoint: "catalogs/\(catalogId)/assets?asset_ids=\(assetIdsString)")))
         }
         
         return assets

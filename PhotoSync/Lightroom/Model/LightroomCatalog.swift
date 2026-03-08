@@ -1,5 +1,5 @@
 //
-//  Catalog.swift
+//  LightroomCatalog.swift
 //  CreativeCloudApp
 //
 //  Created by Dirk Stichling on 31.12.25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Catalog : Hashable {
+class LightroomCatalog : Hashable {
     let id: String
     let subtype: String
     let name: String
@@ -18,7 +18,7 @@ class Catalog : Hashable {
         self.name = name
     }
 
-    public static func == (lhs: Catalog, rhs: Catalog) -> Bool {
+    public static func == (lhs: LightroomCatalog, rhs: LightroomCatalog) -> Bool {
         lhs.id == rhs.id
     }
 
@@ -27,11 +27,11 @@ class Catalog : Hashable {
     }
 }
 
-extension Catalog {
-    static func from(json: [String: Any]) -> Catalog? {
+extension LightroomCatalog {
+    static func from(json: [String: Any]) -> LightroomCatalog? {
         if let id = json["id"] as? String, let subtype = json["subtype"] as? String {
             if let payload = json["payload"] as? [String: Any], let name = payload["name"] as? String {
-                return Catalog(id: id, subtype: subtype, name: name)
+                return LightroomCatalog(id: id, subtype: subtype, name: name)
             }
         }
         

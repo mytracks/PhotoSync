@@ -8,10 +8,17 @@
 import Foundation
 
 class LightroomSourceConfiguration : SourceConfiguration {
-    var rootAlbum: Album
-    
-    init(rootAlbum: Album) {
+    var rootFolder: LightroomAlbum?
+    var rootAlbum: LightroomAlbum?
+
+    init(rootFolder: LightroomAlbum) {
+        self.rootAlbum = nil
+        self.rootFolder = rootFolder
+    }
+
+    init(rootAlbum: LightroomAlbum) {
         self.rootAlbum = rootAlbum
+        self.rootFolder = nil
     }
 }
 
@@ -21,7 +28,8 @@ class LightroomSourceProvider : SourceProvider {
     private let authManager: AdobeAuthManager
     private let lightroomConnector: LightroomConnector
     
-    var albums: [Album]?
+    var albums: [LightroomAlbum]?
+    var folders: [LightroomAlbum]?
     
     init(authManager: AdobeAuthManager, lightroomConnector: LightroomConnector) {
         self.authManager = authManager
@@ -48,23 +56,36 @@ class LightroomSourceProvider : SourceProvider {
         Task {
             await self.lightroomConnector.loadAlbums(authManager: self.authManager)
             self.albums = self.lightroomConnector.albums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
+            self.folders = self.lightroomConnector.albums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
         }
     }
     
-    func getRootFolder(for config: LightroomSourceConfiguration) async throws -> any SourceFolder {
+    func getRootFolder(for config: LightroomSourceConfiguration) async throws -> (any SourceFolder)? {
+        config.rootFolder
+    }
+    
+    func getRootAlbum(for config: LightroomSourceConfiguration) async throws -> (any SourceAlbum)? {
         config.rootAlbum
     }
     
     func getSubfolders(folder: SourceFolder, configuration: Configuration) async throws -> [SourceFolder] {
-        if let folder = folder as? Album {
-            return folder.subAlbums
+        if let album = folder as? LightroomAlbum {
+            return album.subAlbums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
         }
         
         return []
     }
     
-    func getPhotos(folder: SourceFolder, configuration: Configuration) async throws -> [SourcePhoto] {
-        if let album = folder as? Album {
+    func getAlbums(folder: SourceFolder, configuration: Configuration) async throws -> [SourceAlbum] {
+        if let album = folder as? LightroomAlbum {
+            return album.subAlbums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
+        }
+
+        return []
+    }
+
+    func getPhotos(album: SourceAlbum, configuration: Configuration) async throws -> [SourcePhoto] {
+        if let album = album as? LightroomAlbum {
             return await self.lightroomConnector.getAssets(authManager: self.authManager, album: album)
         }
         
@@ -72,7 +93,7 @@ class LightroomSourceProvider : SourceProvider {
     }
     
     func getFilename(photo: SourcePhoto, configuration: Configuration) async throws -> String? {
-        if let asset = photo as? Asset {
+        if let asset = photo as? LightroomAsset {
             return asset.fileName
         }
         
@@ -80,7 +101,7 @@ class LightroomSourceProvider : SourceProvider {
     }
     
     func getCaptureDate(photo: SourcePhoto, configuration: Configuration) async throws -> Date? {
-        if let asset = photo as? Asset {
+        if let asset = photo as? LightroomAsset {
             return asset.captureDate
         }
         
@@ -88,13 +109,13 @@ class LightroomSourceProvider : SourceProvider {
     }
     
     func requestJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws {
-        if let asset = photo as? Asset {
+        if let asset = photo as? LightroomAsset {
             try await self.lightroomConnector.generateFullsizeRendition(authManager: self.authManager, asset: asset)
         }
     }
     
     func getJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws -> Data? {
-        if let asset = photo as? Asset {
+        if let asset = photo as? LightroomAsset {
             var retries = 60
             repeat {
                 do {

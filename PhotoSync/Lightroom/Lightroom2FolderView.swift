@@ -13,7 +13,7 @@ struct Lightroom2FolderView: View {
     @Environment(FilesystemTargetProvider.self) var targetProvider
     @Environment(SyncEngine.self) var syncEngine
 
-    @State private var selectedAlbum: Album? = nil
+    @State private var selectedFolder: LightroomAlbum? = nil
     @State private var targetFolder: URL? = nil
     
     var body: some View {
@@ -34,16 +34,16 @@ struct Lightroom2FolderView: View {
             
             VStack(alignment: .leading, spacing: 10) {
                 if self.authManager.isAuthorized {
-                    if let albums = self.sourceProvider.albums, albums.count > 0 {
-                        Picker("Album", selection: self.$selectedAlbum) {
-                            ForEach(albums) { album in
-                                Text(album.name)
-                                    .tag(album)
+                    if let folders = self.sourceProvider.folders, folders.count > 0 {
+                        Picker("Folder", selection: self.$selectedFolder) {
+                            ForEach(folders) { folder in
+                                Text(folder.name)
+                                    .tag(folder)
                             }
                         }
-                        .onChange(of: self.sourceProvider.albums) { _, albums in
-                            if self.selectedAlbum == nil {
-                                self.selectedAlbum = albums?.first
+                        .onChange(of: self.sourceProvider.folders) { _, folders in
+                            if self.selectedFolder == nil {
+                                self.selectedFolder = folders?.first
                             }
                         }
                     }
@@ -53,8 +53,8 @@ struct Lightroom2FolderView: View {
                     }
                     
                     Button("Sync") {
-                        if let selectedAlbum, let targetFolder {
-                            let sourceConfiguration = LightroomSourceConfiguration(rootAlbum: selectedAlbum)
+                        if let selectedFolder, let targetFolder {
+                            let sourceConfiguration = LightroomSourceConfiguration(rootFolder: selectedFolder)
                             let targetConfiguration = FilesystemTargetConfiguration(rootDirectory: targetFolder)
                             self.syncEngine.sync(
                                 sourceProvider: self.sourceProvider,
@@ -63,7 +63,7 @@ struct Lightroom2FolderView: View {
                                 targetConfiguration: targetConfiguration)
                         }
                     }
-                    .disabled(self.selectedAlbum == nil || self.targetFolder == nil)
+                    .disabled(self.selectedFolder == nil || self.targetFolder == nil)
                 }
                 else {
                     Button("Sign in…") {

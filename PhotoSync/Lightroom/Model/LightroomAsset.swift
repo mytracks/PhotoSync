@@ -1,5 +1,5 @@
 //
-//  Asset.swift
+//  LightroomAsset.swift
 //  CreativeCloudApp
 //
 //  Created by Dirk Stichling on 03.01.26.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-class Asset : Hashable, SourcePhoto {
+class LightroomAsset : Hashable, SourcePhoto {
     enum AssetType {
         case other
         case image
@@ -17,7 +17,7 @@ class Asset : Hashable, SourcePhoto {
     let captureDate: Date?
     let fileName: String?
 
-    var album: Album?
+    var album: LightroomAlbum?
 
     init(id: String, captureDate: Date?, fileName: String?) {
         self.id = id
@@ -25,7 +25,7 @@ class Asset : Hashable, SourcePhoto {
         self.fileName = fileName
     }
     
-    public static func == (lhs: Asset, rhs: Asset) -> Bool {
+    public static func == (lhs: LightroomAsset, rhs: LightroomAsset) -> Bool {
         lhs.id == rhs.id
     }
     
@@ -34,8 +34,8 @@ class Asset : Hashable, SourcePhoto {
     }
 }
 
-extension Asset {
-    static func instance(from json: [String: Any]) -> Asset? {
+extension LightroomAsset {
+    static func instance(from json: [String: Any]) -> LightroomAsset? {
         if let assetId = json["id"] as? String {
             if let payload = json["payload"] as? [String: Any] {
 //                print("---- Asset:")
@@ -57,18 +57,18 @@ extension Asset {
                     fileName = nil
                 }
 
-                return Asset(id: assetId, captureDate: captureDate, fileName: fileName)
+                return LightroomAsset(id: assetId, captureDate: captureDate, fileName: fileName)
             }
         }
 
         return nil
     }
     
-    static func list(from json: [[String: Any]]) -> [Asset] {
-        var list: [Asset] = []
+    static func list(from json: [[String: Any]]) -> [LightroomAsset] {
+        var list: [LightroomAsset] = []
         
         for item in json {
-            if let asset = Asset.instance(from: item) {
+            if let asset = LightroomAsset.instance(from: item) {
                 list.append(asset)
             }
         }

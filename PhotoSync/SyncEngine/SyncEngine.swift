@@ -18,7 +18,8 @@ class SyncEngine {
     
     var logEntries: [SyncLogEntry] = []
     var status: SyncStatus = .idle
-    var dryRun: Bool = true
+    var dryRun: Bool = false
+    var loadPhotoListDuringDryRun: Bool = false
     
     func sync<S: SourceProvider, T: TargetProvider>(
         sourceProvider: S,
@@ -29,15 +30,30 @@ class SyncEngine {
                 do {
                     self.appendLog("Starting sync", type: .info)
                     let rootFolder = try await sourceProvider.getRootFolder(for: sourceConfiguration)
-                    self.appendLog("Root folder specified", type: .debug)
+                    let rootAlbum = try await sourceProvider.getRootAlbum(for: sourceConfiguration)
                     
-                    try await self.sync(
-                        folder: rootFolder,
-                        sourceProvider: sourceProvider,
-                        sourceConfiguration: sourceConfiguration,
-                        targetProvider: targetProvider,
-                        targetConfiguration: targetConfiguration)
-
+                    if let rootFolder {
+                        self.appendLog("Root folder specified", type: .debug)
+                        try await self.sync(
+                            folder: rootFolder,
+                            sourceProvider: sourceProvider,
+                            sourceConfiguration: sourceConfiguration,
+                            targetProvider: targetProvider,
+                            targetConfiguration: targetConfiguration)
+                    }
+                    else if let rootAlbum {
+                        self.appendLog("Root album specified", type: .debug)
+                        try await self.sync(
+                            album: rootAlbum,
+                            sourceProvider: sourceProvider,
+                            sourceConfiguration: sourceConfiguration,
+                            targetProvider: targetProvider,
+                            targetConfiguration: targetConfiguration)
+                    }
+                    else {
+                        self.appendLog("Neither folder nor album specified", type: .error)
+                    }
+                    
                     self.appendLog("Sync finished", type: .info)
                 }
                 catch let exception {
@@ -63,29 +79,57 @@ class SyncEngine {
         sourceConfiguration: S.Configuration,
         targetProvider: T,
         targetConfiguration: T.Configuration) async throws {
-            try await self.syncPhotos(
-                folder: folder,
-                sourceProvider: sourceProvider,
-                sourceConfiguration: sourceConfiguration,
-                targetProvider: targetProvider,
-                targetConfiguration: targetConfiguration)
+            self.appendLog("Processing albums of folder: \(folder.name)", type: .info)
+            
+            let albums = try await sourceProvider.getAlbums(folder: folder, configuration: sourceConfiguration)
+            
+            for album in albums {
+                try await self.sync(
+                    album: album,
+                    sourceProvider: sourceProvider,
+                    sourceConfiguration: sourceConfiguration,
+                    targetProvider: targetProvider,
+                    targetConfiguration: targetConfiguration)
+            }
+            
+            self.appendLog("Processing subfolders of folder: \(folder.name)", type: .info)
+            
+            let subfolders = try await sourceProvider.getSubfolders(folder: folder, configuration: sourceConfiguration)
 
-            try await self.syncSubfolders(
-                folder: folder,
-                sourceProvider: sourceProvider,
-                sourceConfiguration: sourceConfiguration,
-                targetProvider: targetProvider,
-                targetConfiguration: targetConfiguration)
+            for subfolder in subfolders {
+                try await self.sync(
+                    folder: subfolder,
+                    sourceProvider: sourceProvider,
+                    sourceConfiguration: sourceConfiguration,
+                    targetProvider: targetProvider,
+                    targetConfiguration: targetConfiguration)
+            }
+        }
+    
+    private func sync<S: SourceProvider, T: TargetProvider>(
+        album: any SourceAlbum,
+        sourceProvider: S,
+        sourceConfiguration: S.Configuration,
+        targetProvider: T,
+        targetConfiguration: T.Configuration) async throws {
+            if !self.dryRun || self.loadPhotoListDuringDryRun {
+                try await self.syncPhotos(
+                    album: album,
+                    sourceProvider: sourceProvider,
+                    sourceConfiguration: sourceConfiguration,
+                    targetProvider: targetProvider,
+                    targetConfiguration: targetConfiguration)
+            }
     }
     
     private func syncPhotos<S: SourceProvider, T: TargetProvider>(
-        folder: any SourceFolder,
+        album: any SourceAlbum,
         sourceProvider: S,
         sourceConfiguration: S.Configuration,
         targetProvider: T,
         targetConfiguration: T.Configuration) async throws {
             self.appendLog("Getting list of photos", type: .debug)
-            let photos = try await sourceProvider.getPhotos(folder: folder, configuration: sourceConfiguration)
+            let photos = try await sourceProvider.getPhotos(album: album, configuration: sourceConfiguration)
             let photoCount = photos.count
             self.appendLog("\(photoCount) photos found", type: .debug)
 
