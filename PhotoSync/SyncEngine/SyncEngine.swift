@@ -7,6 +7,10 @@
 
 import Foundation
 
+struct SyncOptions {
+    let createRootSourceFolderAsTargetFolder: Bool
+}
+
 @MainActor
 @Observable
 class SyncEngine {
@@ -25,28 +29,43 @@ class SyncEngine {
         sourceProvider: S,
         sourceConfiguration: S.Configuration,
         targetProvider: T,
-        targetConfiguration: T.Configuration) {
+        targetConfiguration: T.Configuration,
+        syncOptions: SyncOptions
+    ) {
             Task {
                 do {
                     self.appendLog("Starting sync", type: .info)
-                    let rootFolder = try await sourceProvider.getRootFolder(for: sourceConfiguration)
-                    let rootAlbum = try await sourceProvider.getRootAlbum(for: sourceConfiguration)
-                    
-                    if let rootFolder {
+                    let rootSourceFolder = try await sourceProvider.getRootFolder(for: sourceConfiguration)
+                    let rootSourceAlbum = try await sourceProvider.getRootAlbum(for: sourceConfiguration)
+                    let rootTargetFolder = try await targetProvider.getRootFolder(for: targetConfiguration)
+                    let rootTargetAlbum = try await targetProvider.getRootAlbum(for: targetConfiguration)
+
+                    if let rootSourceFolder, let rootTargetFolder {
                         self.appendLog("Root folder specified", type: .debug)
+                        
+                        var targetFolder = rootTargetFolder
+                        if syncOptions.createRootSourceFolderAsTargetFolder {
+                            targetFolder = try await targetProvider.getOrCreateFolder(
+                                name: rootSourceFolder.name,
+                                baseFolder: rootTargetFolder,
+                                configuration: targetConfiguration)
+                        }
+                        
                         try await self.sync(
-                            folder: rootFolder,
+                            sourceFolder: rootSourceFolder,
                             sourceProvider: sourceProvider,
                             sourceConfiguration: sourceConfiguration,
+                            targetFolder: targetFolder,
                             targetProvider: targetProvider,
                             targetConfiguration: targetConfiguration)
                     }
-                    else if let rootAlbum {
+                    else if let rootSourceAlbum, let rootTargetAlbum {
                         self.appendLog("Root album specified", type: .debug)
                         try await self.sync(
-                            album: rootAlbum,
+                            sourceAlbum: rootSourceAlbum,
                             sourceProvider: sourceProvider,
                             sourceConfiguration: sourceConfiguration,
+                            targetAlbum: rootTargetAlbum,
                             targetProvider: targetProvider,
                             targetConfiguration: targetConfiguration)
                     }
@@ -74,62 +93,78 @@ class SyncEngine {
     }
 
     private func sync<S: SourceProvider, T: TargetProvider>(
-        folder: any SourceFolder,
+        sourceFolder: any SourceFolder,
         sourceProvider: S,
         sourceConfiguration: S.Configuration,
+        targetFolder: any TargetFolder,
         targetProvider: T,
         targetConfiguration: T.Configuration) async throws {
-            self.appendLog("Processing albums of folder: \(folder.name)", type: .info)
+            self.appendLog("Processing albums of folder: \(sourceFolder.name)", type: .info)
             
-            let albums = try await sourceProvider.getAlbums(folder: folder, configuration: sourceConfiguration)
+            let albums = try await sourceProvider.getAlbums(folder: sourceFolder, configuration: sourceConfiguration)
             
             for album in albums {
+                let targetAlbum = try await targetProvider.getOrCreateAlbum(
+                    name: album.name,
+                    baseFolder: targetFolder,
+                    configuration: targetConfiguration)
+                
                 try await self.sync(
-                    album: album,
+                    sourceAlbum: album,
                     sourceProvider: sourceProvider,
                     sourceConfiguration: sourceConfiguration,
+                    targetAlbum: targetAlbum,
                     targetProvider: targetProvider,
                     targetConfiguration: targetConfiguration)
             }
             
-            self.appendLog("Processing subfolders of folder: \(folder.name)", type: .info)
+            self.appendLog("Processing subfolders of folder: \(sourceFolder.name)", type: .info)
             
-            let subfolders = try await sourceProvider.getSubfolders(folder: folder, configuration: sourceConfiguration)
+            let subfolders = try await sourceProvider.getSubfolders(folder: sourceFolder, configuration: sourceConfiguration)
 
             for subfolder in subfolders {
+                let targetFolder = try await targetProvider.getOrCreateFolder(
+                    name: subfolder.name,
+                    baseFolder: targetFolder,
+                    configuration: targetConfiguration)
+                
                 try await self.sync(
-                    folder: subfolder,
+                    sourceFolder: subfolder,
                     sourceProvider: sourceProvider,
                     sourceConfiguration: sourceConfiguration,
+                    targetFolder: targetFolder,
                     targetProvider: targetProvider,
                     targetConfiguration: targetConfiguration)
             }
         }
     
     private func sync<S: SourceProvider, T: TargetProvider>(
-        album: any SourceAlbum,
+        sourceAlbum: any SourceAlbum,
         sourceProvider: S,
         sourceConfiguration: S.Configuration,
+        targetAlbum: TargetAlbum,
         targetProvider: T,
         targetConfiguration: T.Configuration) async throws {
             if !self.dryRun || self.loadPhotoListDuringDryRun {
                 try await self.syncPhotos(
-                    album: album,
+                    sourceAlbum: sourceAlbum,
                     sourceProvider: sourceProvider,
                     sourceConfiguration: sourceConfiguration,
+                    targetAlbum: targetAlbum,
                     targetProvider: targetProvider,
                     targetConfiguration: targetConfiguration)
             }
     }
     
     private func syncPhotos<S: SourceProvider, T: TargetProvider>(
-        album: any SourceAlbum,
+        sourceAlbum: any SourceAlbum,
         sourceProvider: S,
         sourceConfiguration: S.Configuration,
+        targetAlbum: TargetAlbum,
         targetProvider: T,
         targetConfiguration: T.Configuration) async throws {
             self.appendLog("Getting list of photos", type: .debug)
-            let photos = try await sourceProvider.getPhotos(album: album, configuration: sourceConfiguration)
+            let photos = try await sourceProvider.getPhotos(album: sourceAlbum, configuration: sourceConfiguration)
             let photoCount = photos.count
             self.appendLog("\(photoCount) photos found", type: .debug)
 
@@ -146,7 +181,7 @@ class SyncEngine {
                         if phase == .dryRun {
                             self.appendLog("Dry-run for for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
                         }
-                        else if try await !targetProvider.fileExists(fileName: targetFileName, configuration: targetConfiguration) {
+                        else if try await !targetProvider.fileExists(fileName: targetFileName, album: targetAlbum, configuration: targetConfiguration) {
                             if phase == .requestRendering {
                                 // Request renderings
                                 self.appendLog("Requesting JPEG rendering for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
@@ -159,6 +194,7 @@ class SyncEngine {
                                     try await targetProvider.save(
                                         data: jpegData,
                                         fileName: targetFileName,
+                                        album: targetAlbum,
                                         configuration: targetConfiguration)
                                 }
                                 else {
@@ -188,23 +224,23 @@ class SyncEngine {
             }
         }
     
-    private func syncSubfolders<S: SourceProvider, T: TargetProvider>(
-        folder: any SourceFolder,
-        sourceProvider: S,
-        sourceConfiguration: S.Configuration,
-        targetProvider: T,
-        targetConfiguration: T.Configuration) async throws {
-            let subfolders = try await sourceProvider.getSubfolders(folder: folder, configuration: sourceConfiguration)
-            
-            for subfolder in subfolders {
-                try await self.sync(
-                    folder: subfolder,
-                    sourceProvider: sourceProvider,
-                    sourceConfiguration: sourceConfiguration,
-                    targetProvider: targetProvider,
-                    targetConfiguration: targetConfiguration)
-            }
-        }
+//    private func syncSubfolders<S: SourceProvider, T: TargetProvider>(
+//        folder: any SourceFolder,
+//        sourceProvider: S,
+//        sourceConfiguration: S.Configuration,
+//        targetProvider: T,
+//        targetConfiguration: T.Configuration) async throws {
+//            let subfolders = try await sourceProvider.getSubfolders(folder: folder, configuration: sourceConfiguration)
+//            
+//            for subfolder in subfolders {
+//                try await self.sync(
+//                    sourceFolder: subfolder,
+//                    sourceProvider: sourceProvider,
+//                    sourceConfiguration: sourceConfiguration,
+//                    targetProvider: targetProvider,
+//                    targetConfiguration: targetConfiguration)
+//            }
+//        }
     
     private func getExportFilename(fileName: String?, captureDate: Date?) -> String? {
         if let captureDateString = self.formatCaptureDate(captureDate) {

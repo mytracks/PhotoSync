@@ -55,12 +55,17 @@ struct Lightroom2FolderView: View {
                     Button("Sync") {
                         if let selectedFolder, let targetFolder {
                             let sourceConfiguration = LightroomSourceConfiguration(rootFolder: selectedFolder)
-                            let targetConfiguration = FilesystemTargetConfiguration(rootDirectory: targetFolder)
+                            let targetConfiguration = FilesystemTargetConfiguration(rootFolder: targetFolder)
+
+                            let syncOptions = SyncOptions(createRootSourceFolderAsTargetFolder: true)
+
                             self.syncEngine.sync(
                                 sourceProvider: self.sourceProvider,
                                 sourceConfiguration: sourceConfiguration,
                                 targetProvider: self.targetProvider,
-                                targetConfiguration: targetConfiguration)
+                                targetConfiguration: targetConfiguration,
+                                syncOptions: syncOptions
+                            )
                         }
                     }
                     .disabled(self.selectedFolder == nil || self.targetFolder == nil)

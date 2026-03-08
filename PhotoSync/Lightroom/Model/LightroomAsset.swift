@@ -38,12 +38,15 @@ extension LightroomAsset {
     static func instance(from json: [String: Any]) -> LightroomAsset? {
         if let assetId = json["id"] as? String {
             if let payload = json["payload"] as? [String: Any] {
-//                print("---- Asset:")
-//                print(json)
+                print("---- Asset:")
+                print(json)
                     
-                let captureDate: Date?
+                var captureDate: Date?
                 if let captureDateString = payload["captureDate"] as? String {
                     captureDate = try? Date(captureDateString, strategy: .iso8601)
+                    if captureDate == nil, captureDateString.count == 19 {
+                        captureDate = try? Date("\(captureDateString)Z", strategy: .iso8601)
+                    }
                 }
                 else {
                     captureDate = nil
