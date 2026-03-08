@@ -153,10 +153,19 @@ class LightroomAPIClient {
     }
     
     func getAssets(catalogId: String, assetIds: [String]) async throws -> [Asset] {
-        let assetIdsString = assetIds.joined(separator: ",")
-        let assets = try await loadResources(endpoint: "catalogs/\(catalogId)/assets?asset_ids=\(assetIdsString)")
+        var assets = [Asset]()
+        var assetIdsToBeProcessed = assetIds
         
-        return Asset.list(from: assets)
+        while assetIdsToBeProcessed.count > 0 {
+            let count = min(assetIdsToBeProcessed.count, 100)
+            let nextAssetIds = assetIdsToBeProcessed[0..<count]
+            assetIdsToBeProcessed = Array(assetIdsToBeProcessed[count...])
+            
+            let assetIdsString = nextAssetIds.joined(separator: ",")
+            assets.append(contentsOf: Asset.list(from:try await loadResources(endpoint: "catalogs/\(catalogId)/assets?asset_ids=\(assetIdsString)")))
+        }
+        
+        return assets
     }
     
     func generateFullsizeRenditions(catalogId: String, assetId: String) async throws {

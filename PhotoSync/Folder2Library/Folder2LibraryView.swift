@@ -189,6 +189,7 @@ struct Folder2LibraryView: View {
         case .success: return .green
         case .warning: return .orange
         case .error: return .red
+        case .debug: return .blue
         }
     }
 }

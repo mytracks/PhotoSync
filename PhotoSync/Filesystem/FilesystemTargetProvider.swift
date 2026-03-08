@@ -20,6 +20,12 @@ class FilesystemTargetConfiguration: TargetConfiguration {
 class FilesystemTargetProvider : TargetProvider {
     typealias Configuration = FilesystemTargetConfiguration
     
+    func fileExists(fileName: String, configuration: Configuration) async throws -> Bool {
+        let filepath = configuration.rootDirectory.appendingPathComponent(fileName)
+        
+        return FileManager.default.fileExists(atPath: filepath.path)
+    }
+    
     func save(data: Data, fileName: String, configuration: Configuration) async throws {
         let filepath = configuration.rootDirectory.appendingPathComponent(fileName)
         

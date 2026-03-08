@@ -13,5 +13,6 @@ protocol TargetConfiguration {
 protocol TargetProvider {
     associatedtype Configuration: TargetConfiguration
 
+    func fileExists(fileName: String, configuration: Configuration) async throws -> Bool
     func save(data: Data, fileName: String, configuration: Configuration) async throws
 }

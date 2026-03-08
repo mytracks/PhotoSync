@@ -12,18 +12,23 @@ struct MainView: View {
     @Environment(AdobeAuthManager.self) private var authManager
     @Environment(\.openWindow) var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(SyncEngine.self) private var syncEngine
     
     var body: some View {
-        TabView {
-            Tab("Lightroom 􀰑 Folder", systemImage: "l.square") {
-                Lightroom2FolderView()
-                    .onChange(of: self.authManager.oauth.state) { _, state in
-                        self.handle(state: state)
-                    }
+        VStack {
+            TabView {
+                Tab("Lightroom 􀰑 Folder", systemImage: "l.square") {
+                    Lightroom2FolderView()
+                        .onChange(of: self.authManager.oauth.state) { _, state in
+                            self.handle(state: state)
+                        }
+                }
+                Tab("Folder 􀰑 Photo Library", systemImage: "photo.stack") {
+                    Folder2LibraryView()
+                }
             }
-            Tab("Folder 􀰑 Photo Library", systemImage: "photo.stack") {
-                Folder2LibraryView()
-            }
+
+            LogView()
         }
         .frame(minWidth: 600, minHeight: 480)
     }

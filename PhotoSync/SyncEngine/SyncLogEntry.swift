@@ -11,6 +11,6 @@ struct SyncLogEntry: Identifiable {
     let type: LogType
 
     enum LogType {
-        case info, success, warning, error
+        case info, success, warning, error, debug
     }
 }
