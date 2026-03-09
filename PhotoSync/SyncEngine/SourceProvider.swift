@@ -18,20 +18,23 @@ protocol SourceFolder {
     var name: String { get }
 }
 
-protocol SourcePhoto {
+protocol SourcePhoto : Hashable {
 }
 
 protocol SourceProvider {
     associatedtype Configuration: SourceConfiguration
-    
-    func getRootFolder(for config: Configuration) async throws -> SourceFolder?
-    func getRootAlbum(for config: Configuration) async throws -> SourceAlbum?
+    associatedtype Photo: SourcePhoto
+    associatedtype Folder: SourceFolder
+    associatedtype Album: SourceAlbum
 
-    func getSubfolders(folder: SourceFolder, configuration: Configuration) async throws -> [SourceFolder]
-    func getAlbums(folder: SourceFolder, configuration: Configuration) async throws -> [SourceAlbum]
-    func getPhotos(album: SourceAlbum, configuration: Configuration) async throws -> [SourcePhoto]
-    func getFilename(photo: SourcePhoto, configuration: Configuration) async throws -> String?
-    func getCaptureDate(photo: SourcePhoto, configuration: Configuration) async throws -> Date?
-    func requestJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws
-    func getJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws -> Data?
+    func getRootFolder(for config: Configuration) async throws -> Folder?
+    func getRootAlbum(for config: Configuration) async throws -> Album?
+
+    func getSubfolders(folder: Folder, configuration: Configuration) async throws -> [Folder]
+    func getAlbums(folder: Folder, configuration: Configuration) async throws -> [Album]
+    func getPhotos(album: Album, configuration: Configuration) async throws -> [Photo]
+    func getFilename(photo: Photo, configuration: Configuration) async throws -> String?
+    func getCaptureDate(photo: Photo, configuration: Configuration) async throws -> Date?
+    func requestJpegData(photo: Photo, configuration: Configuration, jpgQuality: CGFloat) async throws
+    func getJpegData(photo: Photo, configuration: Configuration, jpgQuality: CGFloat) async throws -> Data?
 }

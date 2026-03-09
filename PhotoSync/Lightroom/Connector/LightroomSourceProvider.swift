@@ -60,76 +60,52 @@ class LightroomSourceProvider : SourceProvider {
         }
     }
     
-    func getRootFolder(for config: LightroomSourceConfiguration) async throws -> (any SourceFolder)? {
+    func getRootFolder(for config: LightroomSourceConfiguration) async throws -> LightroomAlbum? {
         config.rootFolder
     }
     
-    func getRootAlbum(for config: LightroomSourceConfiguration) async throws -> (any SourceAlbum)? {
+    func getRootAlbum(for config: LightroomSourceConfiguration) async throws -> LightroomAlbum? {
         config.rootAlbum
     }
     
-    func getSubfolders(folder: SourceFolder, configuration: Configuration) async throws -> [SourceFolder] {
-        if let album = folder as? LightroomAlbum {
-            return album.subAlbums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
-        }
-        
-        return []
+    func getSubfolders(folder: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAlbum] {
+        folder.subAlbums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
     }
     
-    func getAlbums(folder: SourceFolder, configuration: Configuration) async throws -> [SourceAlbum] {
-        if let album = folder as? LightroomAlbum {
-            return album.subAlbums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
-        }
-
-        return []
+    func getAlbums(folder: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAlbum] {
+        folder.subAlbums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
     }
 
-    func getPhotos(album: SourceAlbum, configuration: Configuration) async throws -> [SourcePhoto] {
-        if let album = album as? LightroomAlbum {
-            return await self.lightroomConnector.getAssets(authManager: self.authManager, album: album)
-        }
-        
-        return []
+    func getPhotos(album: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAsset] {
+        await self.lightroomConnector.getAssets(authManager: self.authManager, album: album)
     }
     
-    func getFilename(photo: SourcePhoto, configuration: Configuration) async throws -> String? {
-        if let asset = photo as? LightroomAsset {
-            return asset.fileName
-        }
-        
-        return nil
+    func getFilename(photo: LightroomAsset, configuration: LightroomSourceConfiguration) async throws -> String? {
+        photo.fileName
     }
     
-    func getCaptureDate(photo: SourcePhoto, configuration: Configuration) async throws -> Date? {
-        if let asset = photo as? LightroomAsset {
-            return asset.captureDate
-        }
-        
-        return nil
+    func getCaptureDate(photo: LightroomAsset, configuration: LightroomSourceConfiguration) async throws -> Date? {
+        photo.captureDate
     }
     
-    func requestJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws {
-        if let asset = photo as? LightroomAsset {
-            try await self.lightroomConnector.generateFullsizeRendition(authManager: self.authManager, asset: asset)
-        }
+    func requestJpegData(photo: LightroomAsset, configuration: LightroomSourceConfiguration, jpgQuality: CGFloat) async throws {
+        try await self.lightroomConnector.generateFullsizeRendition(authManager: self.authManager, asset: photo)
     }
     
-    func getJpegData(photo: SourcePhoto, configuration: Configuration, jpgQuality: CGFloat) async throws -> Data? {
-        if let asset = photo as? LightroomAsset {
-            var retries = 60
-            repeat {
-                do {
-                    return try await self.lightroomConnector.getFullsizeRendition(authManager: self.authManager, asset: asset)
-                }
-                catch {
-                    print("Retry: \(retries)")
-                    try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
-                }
-                
-                retries -= 1
+    func getJpegData(photo: LightroomAsset, configuration: LightroomSourceConfiguration, jpgQuality: CGFloat) async throws -> Data? {
+        var retries = 60
+        repeat {
+            do {
+                return try await self.lightroomConnector.getFullsizeRendition(authManager: self.authManager, asset: photo)
             }
-            while retries > 0
+            catch {
+                print("Retry: \(retries)")
+                try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            }
+            
+            retries -= 1
         }
+        while retries > 0
         
         return nil
     }
