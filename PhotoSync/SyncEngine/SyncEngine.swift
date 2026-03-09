@@ -23,7 +23,7 @@ class SyncEngine {
     
     var logEntries: [SyncLogEntry] = []
     var status: SyncStatus = .idle
-    var dryRun: Bool = false
+    var dryRun: Bool = true
     var loadPhotoListDuringDryRun: Bool = true
     
     func sync<S: SourceProvider, T: TargetProvider>(
@@ -172,7 +172,7 @@ class SyncEngine {
             var targetFilenameMap = [S.Photo : String]()
             var targetFilenames = Set<String>()
             
-            var phase: Phase? = self.dryRun ? .dryRun : .evaluateFilenames
+            var phase: Phase? = .evaluateFilenames
             while phase != nil {
                 var counter: Int = 0
                 for photo in photos {
@@ -228,7 +228,12 @@ class SyncEngine {
                 }
                 
                 if phase == .evaluateFilenames {
-                    phase = .requestRendering
+                    if self.dryRun {
+                        phase = .dryRun
+                    }
+                    else {
+                        phase = .requestRendering
+                    }
                 }
                 else if phase == .requestRendering {
                     phase = .load
