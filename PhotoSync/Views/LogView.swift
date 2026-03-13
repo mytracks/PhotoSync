@@ -32,6 +32,7 @@ struct LogView: View {
                 }
             }
         }
+        .frame(maxHeight: .infinity)
     }
     
     private func logColor(for type: SyncLogEntry.LogType) -> Color {

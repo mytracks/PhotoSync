@@ -23,7 +23,7 @@ class SyncEngine {
     
     var logEntries: [SyncLogEntry] = []
     var status: SyncStatus = .idle
-    var dryRun: Bool = true
+    var dryRun: Bool = false
     var loadPhotoListDuringDryRun: Bool = true
     
     func sync<S: SourceProvider, T: TargetProvider>(
@@ -86,8 +86,11 @@ class SyncEngine {
         guard let date else { return nil }
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale.current
-        formatter.timeZone = .current
+        formatter.locale = nil        
+        // The date objects contain the time in "local time" but without any timezone.
+        // Therefore the timeZone as to be set to .gmt so that the formatter
+        // doesn't do any conversions.
+        formatter.timeZone = .gmt
         // Note: mm is minutes; MM is month. hh is 12-hour; HH is 24-hour.
         formatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
         return formatter.string(from: date)
