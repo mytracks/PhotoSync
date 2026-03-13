@@ -7,26 +7,43 @@
 
 import Foundation
 
+@Observable
 class LightroomSourceConfiguration : SourceConfiguration {
-    var rootFolder: LightroomAlbum?
-    var rootAlbum: LightroomAlbum?
-
-    init(rootFolder: LightroomAlbum) {
-        self.rootAlbum = nil
-        self.rootFolder = rootFolder
+    var rootFolder: LightroomAlbum? {
+        didSet {
+            self.update()
+        }
+    }
+    
+    var rootAlbum: LightroomAlbum? {
+        didSet {
+            self.update()
+        }
     }
 
-    init(rootAlbum: LightroomAlbum) {
-        self.rootAlbum = rootAlbum
-        self.rootFolder = nil
+    var canSync: Bool = false
+
+    init() {
+    }
+        
+    private func update() {
+        self.canSync = self.rootAlbum != nil && self.rootFolder != nil
     }
 }
 
 @MainActor
 @Observable
 class LightroomSourceProvider : SourceProvider {
+    enum State {
+        case unintialized
+        case loadingAlbums
+        case ready
+    }
+    
     private let authManager: AdobeAuthManager
     private let lightroomConnector: LightroomConnector
+    
+    var state: State = .unintialized
     
     var albums: [LightroomAlbum]?
     var folders: [LightroomAlbum]?
@@ -40,7 +57,10 @@ class LightroomSourceProvider : SourceProvider {
     func observeState() {
         withObservationTracking {
             if self.authManager.isAuthorized {
-                self.loadAlbums()
+                if self.state != .ready {
+                    self.state = .loadingAlbums
+                    self.loadAlbums()
+                }
             }
         } onChange: {
             Task { @MainActor in
@@ -57,6 +77,8 @@ class LightroomSourceProvider : SourceProvider {
             await self.lightroomConnector.loadAlbums(authManager: self.authManager)
             self.albums = self.lightroomConnector.albums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
             self.folders = self.lightroomConnector.albums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
+            
+            self.state = .ready
         }
     }
     

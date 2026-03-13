@@ -8,31 +8,40 @@
 import SwiftUI
 
 struct SyncConfigurationView: View {
+    @State var sourceConfig: (any SourceConfiguration)?
+    
     var body: some View {
-        HStack(alignment: .top) {
-            GroupBox {
-                SourceConfigurationView()
+        VStack {
+            HStack(alignment: .top) {
+                GroupBox {
+                    SourceConfigurationView() { config in
+                        self.sourceConfig = config
+                    }
                     .padding(4)
-            } label: {
-                Label("Source", systemImage: "square.and.arrow.down.on.square")
-                    .font(.headline)
+                } label: {
+                    Label("Source", systemImage: "square.and.arrow.down.on.square")
+                        .font(.headline)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity)
+                
+                GroupBox {
+                    TargetConfigurationView()
+                        .padding(4)
+                } label: {
+                    Label("Target", systemImage: "square.and.arrow.up.on.square")
+                        .font(.headline)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity)
             }
-            .padding(8)
-            .frame(maxWidth: .infinity)
-
-            GroupBox {
-                TargetConfigurationView()
-                    .padding(4)
-            } label: {
-                Label("Target", systemImage: "square.and.arrow.up.on.square")
-                    .font(.headline)
+            
+            if self.sourceConfig != nil {
+                Text("Can Sync")
             }
-            .padding(8)
-            .frame(maxWidth: .infinity)
+            else {
+                Text("Cannot Sync")
+            }
         }
     }
-}
-
-#Preview {
-    SyncConfigurationView()
 }

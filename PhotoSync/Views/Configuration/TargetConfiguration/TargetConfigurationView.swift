@@ -28,12 +28,11 @@ struct TargetConfigurationView: View {
             } label: {
                 Text("Target type:")
             }
-            
+
+            if self.targetType == .filesystem {
+                FilesystemTargetConfigurationView()
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
-
-#Preview {
-    TargetConfigurationView()
 }

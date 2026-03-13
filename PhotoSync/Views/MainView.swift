@@ -36,6 +36,9 @@ struct MainView: View {
             LogView()
         }
         .frame(minWidth: 600, minHeight: 480)
+        .onChange(of: self.authManager.oauth.state) { _, state in
+            self.handle(state: state)
+        }
     }
     /// Reacts to oauth state changes by opening or closing authorization windows.
     /// - Parameter state: the published state change

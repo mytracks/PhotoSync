@@ -10,18 +10,49 @@ import SwiftUI
 struct LightroomSourceConfigurationView: View {
     @Environment(AdobeAuthManager.self) var authManager
     @Environment(LightroomSourceProvider.self) var sourceProvider
-
+    @State private var selectedFolder: LightroomAlbum? = nil
+    
+    let configHandler: (LightroomSourceConfiguration) -> ()
+    
+    init(configHandler: @escaping (LightroomSourceConfiguration) -> ()) {
+        self.configHandler = configHandler
+    }
+    
     var body: some View {
-        if self.authManager.isAuthorized {
-        }
-        else {
-            Button("Sign in to Adobe Lightroom …") {
-                self.authManager.authenticate()
+        Group {
+            if self.authManager.isAuthorized {
+                if self.sourceProvider.state == .loadingAlbums {
+                    Text("Loading folders and albums. Please wait ...")
+                }
+                else if self.sourceProvider.state == .ready {
+                    
+                    if let folders = self.sourceProvider.folders, folders.count > 0 {
+                        Picker("Folder:", selection: self.$selectedFolder) {
+                            ForEach(folders) { folder in
+                                Text(folder.name)
+                                    .tag(folder)
+                            }
+                        }
+                        //                .onChange(of: self.sourceProvider.folders) { _, folders in
+                        //                    if self.selectedFolder == nil {
+                        //                        self.selectedFolder = folders?.first
+                        //                    }
+                        //                }
+                    }
+                }
+            }
+            else {
+                Button("Sign in to Adobe Lightroom …") {
+                    self.authManager.authenticate()
+                }
             }
         }
+        .onChange(of: self.selectedFolder) {
+            let c = LightroomSourceConfiguration()
+            
+            c.rootFolder = self.selectedFolder
+            
+            self.configHandler(c)
+        }
     }
-}
-
-#Preview {
-    LightroomSourceConfigurationView()
 }

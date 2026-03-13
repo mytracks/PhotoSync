@@ -7,7 +7,8 @@
 
 import Foundation
 
-protocol SourceConfiguration {
+protocol SourceConfiguration : Observable {
+    var canSync: Bool { get }
 }
 
 protocol SourceAlbum {

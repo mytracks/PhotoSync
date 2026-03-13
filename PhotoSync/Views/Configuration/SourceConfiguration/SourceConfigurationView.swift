@@ -16,6 +16,12 @@ enum SourceType: Hashable {
 struct SourceConfigurationView: View {
     @State var sourceType: SourceType = .lightroom
     
+    let sourceConfigHandler: (any SourceConfiguration) -> ()
+    
+    init(sourceConfigHandler: @escaping (any SourceConfiguration) -> ()) {
+        self.sourceConfigHandler = sourceConfigHandler
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             Picker(selection: self.$sourceType) {
@@ -30,13 +36,11 @@ struct SourceConfigurationView: View {
             }
             
             if self.sourceType == .lightroom {
-                LightroomSourceConfigurationView()
+                LightroomSourceConfigurationView() { config in
+                    self.sourceConfigHandler(config)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
-
-#Preview {
-    SourceConfigurationView()
 }

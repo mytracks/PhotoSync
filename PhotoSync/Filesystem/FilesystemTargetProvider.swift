@@ -20,6 +20,10 @@ class FilesystemTargetConfiguration: TargetConfiguration {
         self.rootFolder = nil
         self.rootAlbum = rootAlbum
     }
+    
+    func canSync() -> Bool {
+        return self.rootFolder != nil || self.rootAlbum != nil
+    }
 }
 
 class FilesystemTargetFolder: TargetFolder {
