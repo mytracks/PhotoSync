@@ -21,23 +21,25 @@ struct LightroomSourceConfigurationView: View {
     var body: some View {
         Group {
             if self.authManager.isAuthorized {
-                if self.sourceProvider.state == .loadingAlbums {
-                    Text("Loading folders and albums. Please wait ...")
-                }
-                else if self.sourceProvider.state == .ready {
+                HStack {
+                    Image(systemName: "folder")
+                    Text("Folder:")
                     
-                    if let folders = self.sourceProvider.folders, folders.count > 0 {
-                        Picker("Folder:", selection: self.$selectedFolder) {
-                            ForEach(folders) { folder in
-                                Text(folder.name)
-                                    .tag(folder)
+                    if self.sourceProvider.state == .loadingAlbums {
+                        Text("Loading ...")
+                    }
+                    
+                    if self.sourceProvider.state == .ready {
+                        if let folders = self.sourceProvider.folders, folders.count > 0 {
+                            Picker(selection: self.$selectedFolder) {
+                                ForEach(folders) { folder in
+                                    Text(folder.name)
+                                        .tag(folder)
+                                }
+                            } label: {
+                                EmptyView()
                             }
                         }
-                        //                .onChange(of: self.sourceProvider.folders) { _, folders in
-                        //                    if self.selectedFolder == nil {
-                        //                        self.selectedFolder = folders?.first
-                        //                    }
-                        //                }
                     }
                 }
             }

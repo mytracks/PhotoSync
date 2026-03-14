@@ -21,6 +21,9 @@ protocol TargetPhoto {
 }
 
 protocol TargetProvider {
+    func syncWillStart(config: any TargetConfiguration)
+    func syncDidFinish(config: any TargetConfiguration)
+
     func getRootFolder(for config: any TargetConfiguration) async throws -> (any TargetFolder)?
     func getRootAlbum(for config: any TargetConfiguration) async throws -> (any TargetAlbum)?
 

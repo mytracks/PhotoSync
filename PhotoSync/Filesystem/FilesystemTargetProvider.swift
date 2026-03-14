@@ -52,6 +52,26 @@ class FilesystemTargetPhoto: TargetPhoto {
 @MainActor
 @Observable
 class FilesystemTargetProvider : TargetProvider {
+    func syncWillStart(config: any TargetConfiguration) {
+        guard let config = config as? FilesystemTargetConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+
+        if let folderURL = config.rootFolder {
+            _ = folderURL.startAccessingSecurityScopedResource()
+        }
+    }
+    
+    func syncDidFinish(config: any TargetConfiguration) {
+        guard let config = config as? FilesystemTargetConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+
+        if let folderURL = config.rootFolder {
+            folderURL.stopAccessingSecurityScopedResource()
+        }
+    }
+    
     func getRootFolder(for configuration: any TargetConfiguration) async throws -> (any TargetFolder)? {
         guard let configuration = configuration as? FilesystemTargetConfiguration else {
             fatalError("Unexpected configuration type")

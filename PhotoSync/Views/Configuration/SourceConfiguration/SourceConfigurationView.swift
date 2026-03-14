@@ -24,15 +24,19 @@ struct SourceConfigurationView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Picker(selection: self.$sourceType) {
-                Text("Adobe Lightroom")
-                    .tag(SourceType.lightroom)
-                Text("Filesystem")
-                    .tag(SourceType.filesystem)
-                Text("Apple Photos")
-                    .tag(SourceType.applePhotos)
-            } label: {
-                Text("Source type:")
+            HStack {
+                Image(systemName: "info.circle")
+                Text("Type:")
+                Picker(selection: self.$sourceType) {
+                    Text("Adobe Lightroom")
+                        .tag(SourceType.lightroom)
+                    Text("Filesystem")
+                        .tag(SourceType.filesystem)
+                    Text("Apple Photos")
+                        .tag(SourceType.applePhotos)
+                } label: {
+                    EmptyView()
+                }
             }
             
             if self.sourceType == .lightroom {

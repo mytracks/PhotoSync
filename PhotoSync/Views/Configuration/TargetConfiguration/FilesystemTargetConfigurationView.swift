@@ -12,6 +12,10 @@ struct FilesystemTargetConfigurationView: View {
     
     @State private var targetFolder: URL? = nil
     
+    #if os(iOS)
+    @State private var showFolderPicker: Bool = false
+    #endif
+    
     let configHandler: (FilesystemTargetProvider, FilesystemTargetConfiguration) -> ()
     
     init(configHandler: @escaping (FilesystemTargetProvider, FilesystemTargetConfiguration) -> ()) {
@@ -37,9 +41,18 @@ struct FilesystemTargetConfigurationView: View {
             let config = FilesystemTargetConfiguration(rootFolder: self.targetFolder)
             self.configHandler(self.targetProvider, config)
         }
+        #if os(iOS)
+        .sheet(isPresented: self.$showFolderPicker) {
+            FolderPicker { folderURL in
+                self.showFolderPicker = false
+                self.targetFolder = folderURL
+            }
+        }
+        #endif
     }
     
     private func selectTargetFolder() {
+        #if os(macOS)
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -50,5 +63,10 @@ struct FilesystemTargetConfigurationView: View {
         if panel.runModal() == .OK {
             self.targetFolder = panel.url
         }
+        #endif
+
+#if os(iOS)
+        self.showFolderPicker = true
+#endif
     }
 }

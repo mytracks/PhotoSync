@@ -36,6 +36,10 @@ class SyncEngine {
         Task {
             do {
                 self.appendLog("Starting sync", type: .info)
+                
+                targetProvider.syncWillStart(config: targetConfiguration)
+                defer { targetProvider.syncDidFinish(config: targetConfiguration) }
+                
                 let rootSourceFolder = try await sourceProvider.getRootFolder(for: sourceConfiguration)
                 let rootSourceAlbum = try await sourceProvider.getRootAlbum(for: sourceConfiguration)
                 let rootTargetFolder = try await targetProvider.getRootFolder(for: targetConfiguration)

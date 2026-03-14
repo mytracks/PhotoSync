@@ -6,7 +6,12 @@
 import Foundation
 import AuthenticationServices
 import CryptoKit
+#if canImport(AppKit)
 import AppKit
+#endif
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct AdobeOAuthTokenResponse: Decodable {
     let accessToken: String
@@ -82,7 +87,19 @@ final class AdobeOAuthService: NSObject, ASWebAuthenticationPresentationContextP
     }
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+#if canImport(AppKit)
+        return NSApp.keyWindow ?? NSApp.windows.first ?? ASPresentationAnchor()
+#elseif canImport(UIKit)
+        // On iOS, return the key window's scene's window if available
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.keyWindow {
+            return window
+        }
+        // Fallback to a new window if none available
+        return UIWindow()
+#else
+        return ASPresentationAnchor()
+#endif
     }
 
     private func requestAuthorizationCode(clientID: String, codeChallenge: String) async throws -> String {

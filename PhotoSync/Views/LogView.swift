@@ -25,7 +25,6 @@ struct LogView: View {
                 }
                 .padding(8)
             }
-            .background(Color(nsColor: .textBackgroundColor))
             .onChange(of: self.syncEngine.logEntries.count) {
                 if let last = self.syncEngine.logEntries.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
