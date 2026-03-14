@@ -26,11 +26,11 @@ class SyncEngine {
     var dryRun: Bool = false
     var loadPhotoListDuringDryRun: Bool = true
     
-    func sync<S: SourceProvider, T: TargetProvider>(
-        sourceProvider: S,
-        sourceConfiguration: S.Configuration,
-        targetProvider: T,
-        targetConfiguration: T.Configuration,
+    func sync(
+        sourceProvider: any SourceProvider,
+        sourceConfiguration: any SourceConfiguration,
+        targetProvider: any TargetProvider,
+        targetConfiguration: any TargetConfiguration,
         syncOptions: SyncOptions
     ) {
         Task {
@@ -96,13 +96,13 @@ class SyncEngine {
         return formatter.string(from: date)
     }
     
-    private func sync<S: SourceProvider, T: TargetProvider>(
-        sourceFolder: S.Folder,
-        sourceProvider: S,
-        sourceConfiguration: S.Configuration,
-        targetFolder: T.Folder,
-        targetProvider: T,
-        targetConfiguration: T.Configuration) async throws {
+    private func sync(
+        sourceFolder: any SourceFolder,
+        sourceProvider: any SourceProvider,
+        sourceConfiguration: any SourceConfiguration,
+        targetFolder: any TargetFolder,
+        targetProvider: any TargetProvider,
+        targetConfiguration: any TargetConfiguration) async throws {
             self.appendLog("Processing albums of folder: \(sourceFolder.name)", type: .info)
             
             let albums = try await sourceProvider.getAlbums(folder: sourceFolder, configuration: sourceConfiguration)
@@ -142,13 +142,13 @@ class SyncEngine {
             }
         }
     
-    private func sync<S: SourceProvider, T: TargetProvider>(
-        sourceAlbum: S.Album,
-        sourceProvider: S,
-        sourceConfiguration: S.Configuration,
-        targetAlbum: T.Album,
-        targetProvider: T,
-        targetConfiguration: T.Configuration) async throws {
+    private func sync(
+        sourceAlbum: any SourceAlbum,
+        sourceProvider: any SourceProvider,
+        sourceConfiguration: any SourceConfiguration,
+        targetAlbum: any TargetAlbum,
+        targetProvider: any TargetProvider,
+        targetConfiguration: any TargetConfiguration) async throws {
             if !self.dryRun || self.loadPhotoListDuringDryRun {
                 try await self.syncPhotos(
                     sourceAlbum: sourceAlbum,
@@ -160,19 +160,19 @@ class SyncEngine {
             }
         }
     
-    private func syncPhotos<S: SourceProvider, T: TargetProvider>(
-        sourceAlbum: S.Album,
-        sourceProvider: S,
-        sourceConfiguration: S.Configuration,
-        targetAlbum: T.Album,
-        targetProvider: T,
-        targetConfiguration: T.Configuration) async throws {
+    private func syncPhotos(
+        sourceAlbum: any SourceAlbum,
+        sourceProvider: any SourceProvider,
+        sourceConfiguration: any SourceConfiguration,
+        targetAlbum: any TargetAlbum,
+        targetProvider: any TargetProvider,
+        targetConfiguration: any TargetConfiguration) async throws {
             self.appendLog("Getting list of photos", type: .debug)
             let photos = try await sourceProvider.getPhotos(album: sourceAlbum, configuration: sourceConfiguration)
             let photoCount = photos.count
             self.appendLog("\(photoCount) photos found", type: .debug)
             
-            var targetFilenameMap = [S.Photo : String]()
+            var targetFilenameMap = [String : String]()
             var targetFilenames = Set<String>()
             
             var phase: Phase? = .evaluateFilenames
@@ -186,12 +186,12 @@ class SyncEngine {
                     
                     if phase == .evaluateFilenames {
                         if let targetFileName = self.getExportFilename(fileName: fileName, captureDate: captureDate, existingFilenames: targetFilenames) {
-                            targetFilenameMap[photo] = targetFileName
+                            targetFilenameMap[photo.id] = targetFileName
                             targetFilenames.insert(targetFileName)
                         }
                     }
                     else {
-                        if let targetFileName = targetFilenameMap[photo] {
+                        if let targetFileName = targetFilenameMap[photo.id] {
                             if phase == .dryRun {
                                 self.appendLog("Dry-run for for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
                             }

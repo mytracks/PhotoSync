@@ -21,17 +21,12 @@ protocol TargetPhoto {
 }
 
 protocol TargetProvider {
-    associatedtype Configuration: TargetConfiguration
-    associatedtype Photo: TargetPhoto
-    associatedtype Folder: TargetFolder
-    associatedtype Album: TargetAlbum
-    
-    func getRootFolder(for config: Configuration) async throws -> Folder?
-    func getRootAlbum(for config: Configuration) async throws -> Album?
+    func getRootFolder(for config: any TargetConfiguration) async throws -> (any TargetFolder)?
+    func getRootAlbum(for config: any TargetConfiguration) async throws -> (any TargetAlbum)?
 
-    func getOrCreateFolder(name: String, baseFolder: Folder?, configuration: Configuration) async throws -> Folder
-    func getOrCreateAlbum(name: String, baseFolder: Folder, configuration: Configuration) async throws -> Album
+    func getOrCreateFolder(name: String, baseFolder: (any TargetFolder)?, configuration: any TargetConfiguration) async throws -> any TargetFolder
+    func getOrCreateAlbum(name: String, baseFolder: any TargetFolder, configuration: any TargetConfiguration) async throws -> any TargetAlbum
 
-    func fileExists(fileName: String, album: Album, configuration: Configuration) async throws -> Bool
-    func save(data: Data, fileName: String, album: Album, configuration: Configuration) async throws
+    func fileExists(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Bool
+    func save(data: Data, fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws
 }

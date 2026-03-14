@@ -19,23 +19,19 @@ protocol SourceFolder {
     var name: String { get }
 }
 
-protocol SourcePhoto : Hashable {
+protocol SourcePhoto {
+    var id: String { get }
 }
 
 protocol SourceProvider {
-    associatedtype Configuration: SourceConfiguration
-    associatedtype Photo: SourcePhoto
-    associatedtype Folder: SourceFolder
-    associatedtype Album: SourceAlbum
+    func getRootFolder(for config: any SourceConfiguration) async throws -> (any SourceFolder)?
+    func getRootAlbum(for config: any SourceConfiguration) async throws -> (any SourceAlbum)?
 
-    func getRootFolder(for config: Configuration) async throws -> Folder?
-    func getRootAlbum(for config: Configuration) async throws -> Album?
-
-    func getSubfolders(folder: Folder, configuration: Configuration) async throws -> [Folder]
-    func getAlbums(folder: Folder, configuration: Configuration) async throws -> [Album]
-    func getPhotos(album: Album, configuration: Configuration) async throws -> [Photo]
-    func getFilename(photo: Photo, configuration: Configuration) async throws -> String?
-    func getCaptureDate(photo: Photo, configuration: Configuration) async throws -> Date?
-    func requestJpegData(photo: Photo, configuration: Configuration, jpgQuality: CGFloat) async throws
-    func getJpegData(photo: Photo, configuration: Configuration, jpgQuality: CGFloat) async throws -> Data?
+    func getSubfolders(folder: any SourceFolder, configuration: any SourceConfiguration) async throws -> [any SourceFolder]
+    func getAlbums(folder: any SourceFolder, configuration: any SourceConfiguration) async throws -> [any SourceAlbum]
+    func getPhotos(album: any SourceAlbum, configuration: any SourceConfiguration) async throws -> [any SourcePhoto]
+    func getFilename(photo: any SourcePhoto, configuration: any SourceConfiguration) async throws -> String?
+    func getCaptureDate(photo: any SourcePhoto, configuration: any SourceConfiguration) async throws -> Date?
+    func requestJpegData(photo: any SourcePhoto, configuration: any SourceConfiguration, jpgQuality: CGFloat) async throws
+    func getJpegData(photo: any SourcePhoto, configuration: any SourceConfiguration, jpgQuality: CGFloat) async throws -> Data?
 }

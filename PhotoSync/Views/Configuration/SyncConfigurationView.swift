@@ -20,6 +20,7 @@ struct SyncConfigurationView: View {
             HStack(alignment: .top) {
                 GroupBox {
                     SourceConfigurationView() { provider, config in
+                        self.sourceProvider = provider
                         self.sourceConfig = config
                     }
                     .padding(4)
@@ -32,9 +33,10 @@ struct SyncConfigurationView: View {
                 
                 GroupBox {
                     TargetConfigurationView() { provider, config in
+                        self.targetProvider = provider
                         self.targetConfig = config
                     }
-                        .padding(4)
+                    .padding(4)
                 } label: {
                     Label("Target", systemImage: "square.and.arrow.up.on.square")
                         .font(.headline)
@@ -44,27 +46,21 @@ struct SyncConfigurationView: View {
             }
             
             if let sourceConfig = self.sourceConfig, let targetConfig = self.targetConfig, sourceConfig.canSync && targetConfig.canSync {
-                Text("Can Sync")
-            }
-            else {
-                Text("Cannot Sync")
+                Button("Sync") {
+                    self.sync()
+                }
             }
         }
     }
     
     private func sync() {
-        guard let sourceProvider = sourceProvider else { return }
-        guard let targetProvider = targetProvider else { return }
-        guard let sourceConfig = sourceConfig else { return }
-        guard let targetConfig = targetConfig else { return }
+        guard let sourceProvider else { return }
+        guard let sourceConfig else { return }
+        guard let targetProvider else { return }
+        guard let targetConfig else { return }
         
         let syncOptions = SyncOptions(createRootSourceFolderAsTargetFolder: true)
-
-        self.syncEngine.sync(
-            sourceProvider: sourceProvider,
-            sourceConfiguration: sourceConfig,
-            targetProvider: targetProvider,
-            targetConfiguration: targetConfig,
-            syncOptions: syncOptions
+        
+        self.syncEngine.sync(sourceProvider: sourceProvider, sourceConfiguration: sourceConfig, targetProvider: targetProvider, targetConfiguration: targetConfig, syncOptions: syncOptions)
     }
 }

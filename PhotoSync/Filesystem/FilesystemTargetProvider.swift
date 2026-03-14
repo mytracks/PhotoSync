@@ -52,40 +52,56 @@ class FilesystemTargetPhoto: TargetPhoto {
 @MainActor
 @Observable
 class FilesystemTargetProvider : TargetProvider {
-    typealias Configuration = FilesystemTargetConfiguration
-    typealias Photo = FilesystemTargetPhoto
-    typealias Album = FilesystemTargetAlbum
-    typealias Folder = FilesystemTargetFolder
-    
-    func getRootFolder(for config: Configuration) async throws -> Folder? {
-        if let url = config.rootFolder {
+    func getRootFolder(for configuration: any TargetConfiguration) async throws -> (any TargetFolder)? {
+        guard let configuration = configuration as? FilesystemTargetConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+        
+        if let url = configuration.rootFolder {
             return FilesystemTargetFolder(url: url)
         }
         
         return nil
     }
     
-    func getRootAlbum(for config: Configuration) async throws -> Album? {
-        if let url = config.rootAlbum {
+    func getRootAlbum(for configuration: any TargetConfiguration) async throws -> (any TargetAlbum)? {
+        guard let configuration = configuration as? FilesystemTargetConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+        
+        if let url = configuration.rootAlbum {
             return FilesystemTargetAlbum(url: url)
         }
         
         return nil
     }
     
-    func fileExists(fileName: String, album: Album, configuration: FilesystemTargetConfiguration) async throws -> Bool {
+    func fileExists(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Bool {
+        guard let album = album as? FilesystemTargetAlbum else {
+            fatalError("Unexpected album type")
+        }
+        
         let filepath = album.url.appendingPathComponent(fileName)
         
         return FileManager.default.fileExists(atPath: filepath.path)
     }
     
-    func save(data: Data, fileName: String, album: Album, configuration: FilesystemTargetConfiguration) async throws {
+    func save(data: Data, fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws {
+        guard let album = album as? FilesystemTargetAlbum else {
+            fatalError("Unexpected album type")
+        }
+
         let filepath = album.url.appendingPathComponent(fileName)
         
         FileManager.default.createFile(atPath: filepath.path, contents: data)
     }
     
-    func getOrCreateFolder(name: String, baseFolder: FilesystemTargetFolder?, configuration: FilesystemTargetConfiguration) async throws -> Folder {
+    func getOrCreateFolder(name: String, baseFolder: (any TargetFolder)?, configuration: any TargetConfiguration) async throws -> any TargetFolder {
+        guard let configuration = configuration as? FilesystemTargetConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+        let baseFolder = baseFolder as? FilesystemTargetFolder
+        
         guard let baseURL = baseFolder?.url ?? configuration.rootFolder else {
             throw FilesystemTargetProviderError.general("no base folder")
         }
@@ -99,7 +115,11 @@ class FilesystemTargetProvider : TargetProvider {
         return FilesystemTargetFolder(url: folderURL)
     }
     
-    func getOrCreateAlbum(name: String, baseFolder: FilesystemTargetFolder, configuration: FilesystemTargetConfiguration) async throws -> Album {
+    func getOrCreateAlbum(name: String, baseFolder: any TargetFolder, configuration: any TargetConfiguration) async throws -> any TargetAlbum {
+        guard let baseFolder = baseFolder as? FilesystemTargetFolder else {
+            fatalError("Unexpected base folder type")
+        }
+        
         let albumURL = baseFolder.url.appendingPathComponent(name)
         
         if !FileManager.default.fileExists(atPath: albumURL.path) {

@@ -48,7 +48,7 @@ struct LightroomSourceConfigurationView: View {
             }
         }
         .onChange(of: self.selectedFolder) {
-            let config = LightroomSourceConfiguration(rootAlbum: self.selectedFolder)
+            let config = LightroomSourceConfiguration(rootFolder: self.selectedFolder)
             self.configHandler(self.sourceProvider, config)
         }
     }

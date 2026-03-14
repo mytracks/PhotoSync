@@ -76,39 +76,75 @@ class LightroomSourceProvider : SourceProvider {
         }
     }
     
-    func getRootFolder(for config: LightroomSourceConfiguration) async throws -> LightroomAlbum? {
-        config.rootFolder
+    func getRootFolder(for config: any SourceConfiguration) async throws -> (any SourceFolder)? {
+        guard let config = config as? LightroomSourceConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+        
+        return config.rootFolder
     }
     
-    func getRootAlbum(for config: LightroomSourceConfiguration) async throws -> LightroomAlbum? {
-        config.rootAlbum
+    func getRootAlbum(for config: any SourceConfiguration) async throws -> (any SourceAlbum)? {
+        guard let config = config as? LightroomSourceConfiguration else {
+            fatalError("Unexpected configuration type")
+        }
+        
+        return config.rootAlbum
     }
     
-    func getSubfolders(folder: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAlbum] {
-        folder.subAlbums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
+    func getSubfolders(folder: any SourceFolder, configuration: any SourceConfiguration) async throws -> [any SourceFolder] {
+        guard let folder = folder as? LightroomAlbum else {
+            fatalError("Unexpected folder type")
+        }
+        
+        return folder.subAlbums.filter({$0.type == .folder}).sorted(by: { $0.name < $1.name })
     }
     
-    func getAlbums(folder: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAlbum] {
-        folder.subAlbums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
+    func getAlbums(folder: any SourceFolder, configuration: any SourceConfiguration) async throws -> [any SourceAlbum] {
+        guard let folder = folder as? LightroomAlbum else {
+            fatalError("Unexpected folder type")
+        }
+
+        return folder.subAlbums.filter({$0.type == .album}).sorted(by: { $0.name < $1.name })
     }
 
-    func getPhotos(album: LightroomAlbum, configuration: LightroomSourceConfiguration) async throws -> [LightroomAsset] {
-        await self.lightroomConnector.getAssets(authManager: self.authManager, album: album)
+    func getPhotos(album: any SourceAlbum, configuration: any SourceConfiguration) async throws -> [any SourcePhoto] {
+        guard let album = album as? LightroomAlbum else {
+            fatalError("Unexpected album type")
+        }
+        
+        return await self.lightroomConnector.getAssets(authManager: self.authManager, album: album)
     }
     
-    func getFilename(photo: LightroomAsset, configuration: LightroomSourceConfiguration) async throws -> String? {
-        photo.fileName
+    func getFilename(photo: any SourcePhoto, configuration: any SourceConfiguration) async throws -> String? {
+        guard let photo = photo as? LightroomAsset else {
+            fatalError("Unexpected photo type")
+        }
+        
+        return photo.fileName
     }
     
-    func getCaptureDate(photo: LightroomAsset, configuration: LightroomSourceConfiguration) async throws -> Date? {
-        photo.captureDate
+    func getCaptureDate(photo: any SourcePhoto, configuration: any SourceConfiguration) async throws -> Date? {
+        guard let photo = photo as? LightroomAsset else {
+            fatalError("Unexpected photo type")
+        }
+
+        return photo.captureDate
     }
     
-    func requestJpegData(photo: LightroomAsset, configuration: LightroomSourceConfiguration, jpgQuality: CGFloat) async throws {
+    func requestJpegData(photo: any SourcePhoto, configuration: any SourceConfiguration, jpgQuality: CGFloat) async throws {
+        guard let photo = photo as? LightroomAsset else {
+            fatalError("Unexpected photo type")
+        }
+
         try await self.lightroomConnector.generateFullsizeRendition(authManager: self.authManager, asset: photo)
     }
     
-    func getJpegData(photo: LightroomAsset, configuration: LightroomSourceConfiguration, jpgQuality: CGFloat) async throws -> Data? {
+    func getJpegData(photo: any SourcePhoto, configuration: any SourceConfiguration, jpgQuality: CGFloat) async throws -> Data? {
+        guard let photo = photo as? LightroomAsset else {
+            fatalError("Unexpected photo type")
+        }
+
         var retries = 60
         repeat {
             do {
