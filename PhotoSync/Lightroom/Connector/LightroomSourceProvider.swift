@@ -7,27 +7,21 @@
 
 import Foundation
 
-@Observable
 class LightroomSourceConfiguration : SourceConfiguration {
-    var rootFolder: LightroomAlbum? {
-        didSet {
-            self.update()
-        }
-    }
-    
-    var rootAlbum: LightroomAlbum? {
-        didSet {
-            self.update()
-        }
+    let rootFolder: LightroomAlbum?
+    let rootAlbum: LightroomAlbum?
+    let canSync: Bool
+
+    init(rootFolder: LightroomAlbum?) {
+        self.rootFolder = rootFolder
+        self.rootAlbum = nil
+        self.canSync = true
     }
 
-    var canSync: Bool = false
-
-    init() {
-    }
-        
-    private func update() {
-        self.canSync = self.rootAlbum != nil && self.rootFolder != nil
+    init(rootAlbum: LightroomAlbum?) {
+        self.rootFolder = nil
+        self.rootAlbum = rootAlbum
+        self.canSync = true
     }
 }
 

@@ -12,9 +12,9 @@ struct LightroomSourceConfigurationView: View {
     @Environment(LightroomSourceProvider.self) var sourceProvider
     @State private var selectedFolder: LightroomAlbum? = nil
     
-    let configHandler: (LightroomSourceConfiguration) -> ()
+    let configHandler: (LightroomSourceProvider, LightroomSourceConfiguration) -> ()
     
-    init(configHandler: @escaping (LightroomSourceConfiguration) -> ()) {
+    init(configHandler: @escaping (LightroomSourceProvider, LightroomSourceConfiguration) -> ()) {
         self.configHandler = configHandler
     }
     
@@ -48,11 +48,8 @@ struct LightroomSourceConfigurationView: View {
             }
         }
         .onChange(of: self.selectedFolder) {
-            let c = LightroomSourceConfiguration()
-            
-            c.rootFolder = self.selectedFolder
-            
-            self.configHandler(c)
+            let config = LightroomSourceConfiguration(rootAlbum: self.selectedFolder)
+            self.configHandler(self.sourceProvider, config)
         }
     }
 }

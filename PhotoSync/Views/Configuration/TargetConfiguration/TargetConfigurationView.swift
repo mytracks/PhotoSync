@@ -16,6 +16,12 @@ enum TargetType: Hashable {
 struct TargetConfigurationView: View {
     @State var targetType: TargetType = .filesystem
     
+    let configHandler: (any TargetProvider, any TargetConfiguration) -> ()
+    
+    init(configHandler: @escaping (any TargetProvider, any TargetConfiguration) -> ()) {
+        self.configHandler = configHandler
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             Picker(selection: self.$targetType) {
@@ -30,7 +36,9 @@ struct TargetConfigurationView: View {
             }
 
             if self.targetType == .filesystem {
-                FilesystemTargetConfigurationView()
+                FilesystemTargetConfigurationView() { provider, config in
+                    self.configHandler(provider, config)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

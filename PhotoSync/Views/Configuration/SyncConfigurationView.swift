@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct SyncConfigurationView: View {
-    @State var sourceConfig: (any SourceConfiguration)?
+    @Environment(SyncEngine.self) var syncEngine
     
+    @State var sourceProvider: (any SourceProvider)?
+    @State var sourceConfig: (any SourceConfiguration)?
+    @State var targetProvider: (any TargetProvider)?
+    @State var targetConfig: (any TargetConfiguration)?
+
     var body: some View {
         VStack {
             HStack(alignment: .top) {
                 GroupBox {
-                    SourceConfigurationView() { config in
+                    SourceConfigurationView() { provider, config in
                         self.sourceConfig = config
                     }
                     .padding(4)
@@ -26,7 +31,9 @@ struct SyncConfigurationView: View {
                 .frame(maxWidth: .infinity)
                 
                 GroupBox {
-                    TargetConfigurationView()
+                    TargetConfigurationView() { provider, config in
+                        self.targetConfig = config
+                    }
                         .padding(4)
                 } label: {
                     Label("Target", systemImage: "square.and.arrow.up.on.square")
@@ -36,12 +43,28 @@ struct SyncConfigurationView: View {
                 .frame(maxWidth: .infinity)
             }
             
-            if self.sourceConfig != nil {
+            if let sourceConfig = self.sourceConfig, let targetConfig = self.targetConfig, sourceConfig.canSync && targetConfig.canSync {
                 Text("Can Sync")
             }
             else {
                 Text("Cannot Sync")
             }
         }
+    }
+    
+    private func sync() {
+        guard let sourceProvider = sourceProvider else { return }
+        guard let targetProvider = targetProvider else { return }
+        guard let sourceConfig = sourceConfig else { return }
+        guard let targetConfig = targetConfig else { return }
+        
+        let syncOptions = SyncOptions(createRootSourceFolderAsTargetFolder: true)
+
+        self.syncEngine.sync(
+            sourceProvider: sourceProvider,
+            sourceConfiguration: sourceConfig,
+            targetProvider: targetProvider,
+            targetConfiguration: targetConfig,
+            syncOptions: syncOptions
     }
 }

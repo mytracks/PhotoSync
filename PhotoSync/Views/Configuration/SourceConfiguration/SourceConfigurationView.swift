@@ -16,10 +16,10 @@ enum SourceType: Hashable {
 struct SourceConfigurationView: View {
     @State var sourceType: SourceType = .lightroom
     
-    let sourceConfigHandler: (any SourceConfiguration) -> ()
+    let configHandler: (any SourceProvider, any SourceConfiguration) -> ()
     
-    init(sourceConfigHandler: @escaping (any SourceConfiguration) -> ()) {
-        self.sourceConfigHandler = sourceConfigHandler
+    init(configHandler: @escaping (any SourceProvider, any SourceConfiguration) -> ()) {
+        self.configHandler = configHandler
     }
     
     var body: some View {
@@ -36,8 +36,8 @@ struct SourceConfigurationView: View {
             }
             
             if self.sourceType == .lightroom {
-                LightroomSourceConfigurationView() { config in
-                    self.sourceConfigHandler(config)
+                LightroomSourceConfigurationView() { (provider, config) in
+                    self.configHandler(provider, config)
                 }
             }
         }

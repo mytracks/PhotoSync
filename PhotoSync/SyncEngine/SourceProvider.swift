@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol SourceConfiguration : Observable {
+protocol SourceConfiguration {
     var canSync: Bool { get }
 }
 

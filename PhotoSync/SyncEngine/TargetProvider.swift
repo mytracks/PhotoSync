@@ -8,7 +8,7 @@
 import Foundation
 
 protocol TargetConfiguration {
-    func canSync() -> Bool
+    var canSync: Bool { get }
 }
 
 protocol TargetAlbum {

@@ -8,7 +8,15 @@
 import SwiftUI
 
 struct FilesystemTargetConfigurationView: View {
+    @Environment(FilesystemTargetProvider.self) var targetProvider: FilesystemTargetProvider
+    
     @State private var targetFolder: URL? = nil
+    
+    let configHandler: (FilesystemTargetProvider, FilesystemTargetConfiguration) -> ()
+    
+    init(configHandler: @escaping (FilesystemTargetProvider, FilesystemTargetConfiguration) -> ()) {
+        self.configHandler = configHandler
+    }
     
     var body: some View {
         HStack {
@@ -25,7 +33,10 @@ struct FilesystemTargetConfigurationView: View {
                 self.selectTargetFolder()
             }
         }
-        
+        .onChange(of: self.targetFolder) {
+            let config = FilesystemTargetConfiguration(rootFolder: self.targetFolder)
+            self.configHandler(self.targetProvider, config)
+        }
     }
     
     private func selectTargetFolder() {

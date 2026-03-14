@@ -10,19 +10,18 @@ import Foundation
 class FilesystemTargetConfiguration: TargetConfiguration {
     let rootFolder: URL?
     let rootAlbum: URL?
-
-    init(rootFolder: URL) {
+    let canSync: Bool
+    
+    init(rootFolder: URL?) {
         self.rootFolder = rootFolder
         self.rootAlbum = nil
+        self.canSync = true
     }
-    
-    init (rootAlbum: URL) {
+
+    init(rootAlbum: URL?) {
         self.rootFolder = nil
         self.rootAlbum = rootAlbum
-    }
-    
-    func canSync() -> Bool {
-        return self.rootFolder != nil || self.rootAlbum != nil
+        self.canSync = true
     }
 }
 
