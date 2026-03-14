@@ -15,6 +15,9 @@ class AdobeAuthManager {
     
     var isAuthorized: Bool = false
     var accessToken: String? = nil
+    private var authorization: OAuth.Authorization?
+    
+    private var refreshTimer: Timer?
 
     init() {
         let providers: [OAuth.Provider] = [OAuth.Provider(
@@ -35,17 +38,28 @@ class AdobeAuthManager {
         self.oauth = .init(providers: providers, options: options)
         
         self.observeState()
+        
+        self.startRefreshTimer()
     }
     
     func observeState() {
         withObservationTracking {
-            if case .authorized(_, let token) = self.oauth.state {
+            print("observeState: \(self.oauth.state)")
+            if case .authorized(_, let authorization) = self.oauth.state {
+                print("state: authorized")
                 self.isAuthorized = true
-                self.accessToken = token.token.accessToken
+                self.accessToken = authorization.token.accessToken
+                self.authorization = authorization
+            }
+            else if case .requestingAccessToken(let provider) = self.oauth.state {
+                print("state: requestingAccessToken")
+            }
+            else if case .error(let provider, let error) = self.oauth.state {
+                print("state: error")
             }
             else {
-                self.isAuthorized = false
-                self.accessToken = nil
+//                self.isAuthorized = false
+//                self.accessToken = nil
             }
         } onChange: {
             Task { @MainActor in
@@ -71,5 +85,37 @@ class AdobeAuthManager {
     
     func logout() {
         self.oauth.clear()
+    }
+    
+
+    func startRefreshTimer() {
+        self.refreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+            Task { @MainActor in
+                self.updateAccessTokenIfNeeded()
+            }
+        }
+    }
+
+    func stopRefreshTimer() {
+        self.refreshTimer?.invalidate()
+        self.refreshTimer = nil
+    }
+    
+    var r = false
+    func updateAccessTokenIfNeeded() {
+        guard let provider = getAdobeProvider() else {
+            print("Adobe provider not found")
+            return
+        }
+
+        if let authorization, let expiration = authorization.expiration {
+            let secondsTilExpiry = expiration.timeIntervalSinceNow
+            print("Expires: \(secondsTilExpiry)")
+            
+            if secondsTilExpiry < 5*60 {
+                print("requesting refresh")
+                self.oauth.authorize(provider: provider, grantType: .refreshToken)
+            }
+        }
     }
 }

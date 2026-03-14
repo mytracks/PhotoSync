@@ -27,6 +27,12 @@ struct PhotoSyncApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
+                .onAppear {
+                    UIApplication.shared.isIdleTimerDisabled = true
+                }
+                .onDisappear {
+                    UIApplication.shared.isIdleTimerDisabled = false
+                }
         }
         .environment(self.authManager)
         .environment(self.lightroomConnector)
