@@ -28,9 +28,9 @@ struct PhotoSyncApp: App {
         WindowGroup {
             MainView()
                 .onAppear {
-                    #if os(iOS)
+#if os(iOS)
                     UIApplication.shared.isIdleTimerDisabled = true
-                    #endif
+#endif
                 }
                 .onDisappear {
 #if os(iOS)
@@ -43,11 +43,5 @@ struct PhotoSyncApp: App {
         .environment(self.lightroomSourceProvider)
         .environment(self.filesystemTargetProvider)
         .environment(self.syncEngine)
-        
-#if canImport(WebKit)
-        WindowGroup(id: "oauth") {
-            OAWebView(oauth: self.authManager.oauth)
-        }
-#endif
     }
 }

@@ -24,17 +24,20 @@ struct FilesystemTargetConfigurationView: View {
     
     var body: some View {
         HStack {
+            Image(systemName: "folder")
             Text("Folder:")
+            
             if let targetFolder = self.targetFolder, let basename = targetFolder.pathComponents.last {
                 Text(basename)
                     .fontDesign(.monospaced)
                     .fontWeight(.light)
+                Button("…") {
+                    self.selectTargetFolder()
+                }
             } else {
-                Text("No folder selected")
-                    .fontWeight(.light)
-            }
-            Button("Choose Folder…") {
-                self.selectTargetFolder()
+                Button("Select Folder…") {
+                    self.selectTargetFolder()
+                }
             }
         }
         .onChange(of: self.targetFolder) {

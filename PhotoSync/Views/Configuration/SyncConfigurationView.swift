@@ -45,7 +45,7 @@ struct SyncConfigurationView: View {
         .padding(8)
         .frame(maxWidth: .infinity)
     }
-
+    
     var body: some View {
         VStack {
             if self.useWideLayout {
@@ -79,13 +79,18 @@ struct SyncConfigurationView: View {
         
         self.syncEngine.sync(sourceProvider: sourceProvider, sourceConfiguration: sourceConfig, targetProvider: targetProvider, targetConfiguration: targetConfig, syncOptions: syncOptions)
     }
-
-    private var isIPad: Bool {
+    
+    private var isIPadOrMac: Bool {
+#if os(iOS)
         UIDevice.current.userInterfaceIdiom == .pad
+#else
+        true
+#endif
     }
     
     private var useWideLayout: Bool {
         // iPad always uses wide layout; iPhone only in landscape (regular width)
-        self.isIPad || self.horizontalSizeClass == .regular
+        //        self.isIPadOrMac || self.horizontalSizeClass == .regular
+        self.horizontalSizeClass == .regular
     }
 }

@@ -14,6 +14,8 @@ struct MainView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @Environment(SyncEngine.self) private var syncEngine
     
+    @State private var showOAuthWindow: Bool = false
+    
     var body: some View {
         VStack {
             SyncConfigurationView()
@@ -22,23 +24,30 @@ struct MainView: View {
             
             LogView()
         }
-//        .frame(minWidth: 600, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
+        #if os(macOS)
+        .frame(minWidth: 600, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
+        #endif
         .onChange(of: self.authManager.oauth.state) { _, state in
             self.handle(state: state)
+        }
+        .fullScreenCover(isPresented: self.$showOAuthWindow) {
+//        .sheet(isPresented: self.$showOAuthWindow) {
+            OAWebView(oauth: self.authManager.oauth)
+                //.frame(maxWidth: 800, maxHeight: 800)
+                .presentationDetents([.large])
         }
     }
     /// Reacts to oauth state changes by opening or closing authorization windows.
     /// - Parameter state: the published state change
     private func handle(state: OAuth.State) {
-#if canImport(WebKit)
         switch state {
         case .empty, .error, .requestingAccessToken, .requestingDeviceCode:
             break
         case .authorizing, .receivedDeviceCode:
-            self.openWindow(id: "oauth")
+            self.showOAuthWindow = true
         case .authorized(_, _):
-            self.dismissWindow(id: "oauth")
+            self.showOAuthWindow = false
         }
-#endif
     }
 }
+

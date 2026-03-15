@@ -171,10 +171,10 @@ class SyncEngine {
         targetAlbum: any TargetAlbum,
         targetProvider: any TargetProvider,
         targetConfiguration: any TargetConfiguration) async throws {
-            self.appendLog("Getting list of photos", type: .debug)
+            self.appendLog("Getting list of photos: \(sourceAlbum.name)", type: .debug)
             let photos = try await sourceProvider.getPhotos(album: sourceAlbum, configuration: sourceConfiguration)
             let photoCount = photos.count
-            self.appendLog("\(photoCount) photos found", type: .debug)
+            self.appendLog("\(photoCount) photos found in \(sourceAlbum.name)", type: .debug)
             
             var targetFilenameMap = [String : String]()
             var targetFilenames = Set<String>()

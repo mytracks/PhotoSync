@@ -33,7 +33,7 @@ class AdobeAuthManager {
         let options: [OAuth.Option: Any] = [
             .applicationTag: "info.stichling.PhotoSync",
             .autoRefresh: false,
-            .useNonPersistentWebDataStore: false,
+            .useNonPersistentWebDataStore: true,
         ]
         
         self.oauth = .init(providers: providers, options: options)

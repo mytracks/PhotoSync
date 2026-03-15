@@ -24,17 +24,23 @@ struct TargetConfigurationView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Picker(selection: self.$targetType) {
-                Text("Adobe Lightroom")
-                    .tag(TargetType.lightroom)
-                Text("Filesystem")
-                    .tag(TargetType.filesystem)
-                Text("Apple Photos")
-                    .tag(TargetType.applePhotos)
-            } label: {
-                Text("Target type:")
+            HStack {
+                Image(systemName: "info.circle")
+                Text("Type:")
+                
+                Picker(selection: self.$targetType) {
+                    Text("Adobe Lightroom")
+                        .tag(TargetType.lightroom)
+                    Text("Filesystem")
+                        .tag(TargetType.filesystem)
+                    Text("Apple Photos")
+                        .tag(TargetType.applePhotos)
+                } label: {
+                    EmptyView()
+                }
+                .frame(maxWidth: .infinity)
             }
-
+            
             if self.targetType == .filesystem {
                 FilesystemTargetConfigurationView() { provider, config in
                     self.configHandler(provider, config)
