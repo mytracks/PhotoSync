@@ -28,10 +28,14 @@ struct PhotoSyncApp: App {
         WindowGroup {
             MainView()
                 .onAppear {
+                    #if os(iOS)
                     UIApplication.shared.isIdleTimerDisabled = true
+                    #endif
                 }
                 .onDisappear {
+#if os(iOS)
                     UIApplication.shared.isIdleTimerDisabled = false
+#endif
                 }
         }
         .environment(self.authManager)

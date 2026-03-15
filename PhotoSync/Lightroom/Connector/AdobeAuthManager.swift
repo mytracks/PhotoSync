@@ -24,22 +24,21 @@ class AdobeAuthManager {
             id: "adobe",
             authorizationURL: URL(string: "https://ims-na1.adobelogin.com/ims/authorize/v2")!,
             accessTokenURL: URL(string: "https://ims-na1.adobelogin.com/ims/token/v3")!,
-            clientID: "fdd1936caa144180876858ef4a39b404",
+            clientID: "f8fb3f4f2c4447479a05dd0bb6404287",
             clientSecret: nil,
-            redirectURI: "adobe+78789e50e5e275dcb231ab6c687948543dca6753://adobeid/fdd1936caa144180876858ef4a39b404",
+            redirectURI: "adobe+feb68b1dbf5a8b5ed1d43bb796bc637e4ec2ab02://adobeid/f8fb3f4f2c4447479a05dd0bb6404287",
             scope: ["offline_access","lr_partner_apis","lr_partner_rendition_apis","AdobeID","openid"]
         )]
+        
         let options: [OAuth.Option: Any] = [
             .applicationTag: "info.stichling.PhotoSync",
-            .autoRefresh: true,
+            .autoRefresh: false,
             .useNonPersistentWebDataStore: false,
         ]
         
         self.oauth = .init(providers: providers, options: options)
         
         self.observeState()
-        
-        self.startRefreshTimer()
     }
     
     func observeState() {
@@ -47,15 +46,26 @@ class AdobeAuthManager {
             print("observeState: \(self.oauth.state)")
             if case .authorized(_, let authorization) = self.oauth.state {
                 print("state: authorized")
-                self.isAuthorized = true
+                self.isAuthorized = !authorization.isExpired
                 self.accessToken = authorization.token.accessToken
                 self.authorization = authorization
             }
+            else if case .authorizing(let provider, let grantType) = self.oauth.state {
+                print("state: authorizing for grant type \(grantType) for provider \(provider.id)")
+            }
+            else if case .requestingDeviceCode(let provider) = self.oauth.state {
+                print("state: requestingDeviceCode for provider \(provider.id)")
+            }
+            else if case .receivedDeviceCode(let provider, let deviceCode) = self.oauth.state {
+                print("state: receivedDeviceCode \(deviceCode) for provider \(provider.id)")
+            }
             else if case .requestingAccessToken(let provider) = self.oauth.state {
-                print("state: requestingAccessToken")
+                print("state: requestingAccessToken for provider \(provider.id)")
             }
             else if case .error(let provider, let error) = self.oauth.state {
-                print("state: error")
+                print("state: error for provider \(provider.id): \(error.localizedDescription)")
+                self.isAuthorized = false
+                self.accessToken = nil
             }
             else {
 //                self.isAuthorized = false
@@ -78,8 +88,8 @@ class AdobeAuthManager {
             return
         }
         
-        // Use PKCE flow for secure authentication
         let grantType: OAuth.GrantType = .pkce(.init())
+        
         self.oauth.authorize(provider: provider, grantType: grantType)
     }
     

@@ -16,26 +16,13 @@ struct MainView: View {
     
     var body: some View {
         VStack {
-//            TabView {
-//                Tab("Lightroom 􀰑 Folder", systemImage: "l.square") {
-//                    Lightroom2FolderView()
-//                        .onChange(of: self.authManager.oauth.state) { _, state in
-//                            self.handle(state: state)
-//                        }
-//                }
-//                Tab("Folder 􀰑 Photo Library", systemImage: "photo.stack") {
-//                    Folder2LibraryView()
-//                }
-//            }
-
             SyncConfigurationView()
-//            Folder2LibraryView()
             
             Divider()
             
             LogView()
         }
-        .frame(minWidth: 600, minHeight: 480)
+//        .frame(minWidth: 600, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
         .onChange(of: self.authManager.oauth.state) { _, state in
             self.handle(state: state)
         }

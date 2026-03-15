@@ -8,41 +8,57 @@
 import SwiftUI
 
 struct SyncConfigurationView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(SyncEngine.self) var syncEngine
     
     @State var sourceProvider: (any SourceProvider)?
     @State var sourceConfig: (any SourceConfiguration)?
     @State var targetProvider: (any TargetProvider)?
     @State var targetConfig: (any TargetConfiguration)?
+    
+    var sourceGroupBox: some View {
+        GroupBox {
+            SourceConfigurationView() { provider, config in
+                self.sourceProvider = provider
+                self.sourceConfig = config
+            }
+            .padding(4)
+        } label: {
+            Label("Source", systemImage: "square.and.arrow.down.on.square")
+                .font(.headline)
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity)
+    }
+    
+    var targetGroupBox: some View {
+        GroupBox {
+            TargetConfigurationView() { provider, config in
+                self.targetProvider = provider
+                self.targetConfig = config
+            }
+            .padding(4)
+        } label: {
+            Label("Target", systemImage: "square.and.arrow.up.on.square")
+                .font(.headline)
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity)
+    }
 
     var body: some View {
         VStack {
-            HStack(alignment: .top) {
-                GroupBox {
-                    SourceConfigurationView() { provider, config in
-                        self.sourceProvider = provider
-                        self.sourceConfig = config
-                    }
-                    .padding(4)
-                } label: {
-                    Label("Source", systemImage: "square.and.arrow.down.on.square")
-                        .font(.headline)
+            if self.useWideLayout {
+                HStack(alignment: .top) {
+                    self.sourceGroupBox
+                    self.targetGroupBox
                 }
-                .padding(8)
-                .frame(maxWidth: .infinity)
-                
-                GroupBox {
-                    TargetConfigurationView() { provider, config in
-                        self.targetProvider = provider
-                        self.targetConfig = config
-                    }
-                    .padding(4)
-                } label: {
-                    Label("Target", systemImage: "square.and.arrow.up.on.square")
-                        .font(.headline)
+            }
+            else {
+                VStack(alignment: .center) {
+                    self.sourceGroupBox
+                    self.targetGroupBox
                 }
-                .padding(8)
-                .frame(maxWidth: .infinity)
             }
             
             if let sourceConfig = self.sourceConfig, let targetConfig = self.targetConfig, sourceConfig.canSync && targetConfig.canSync {
@@ -62,5 +78,14 @@ struct SyncConfigurationView: View {
         let syncOptions = SyncOptions(createRootSourceFolderAsTargetFolder: true)
         
         self.syncEngine.sync(sourceProvider: sourceProvider, sourceConfiguration: sourceConfig, targetProvider: targetProvider, targetConfiguration: targetConfig, syncOptions: syncOptions)
+    }
+
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    private var useWideLayout: Bool {
+        // iPad always uses wide layout; iPhone only in landscape (regular width)
+        self.isIPad || self.horizontalSizeClass == .regular
     }
 }
