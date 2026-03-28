@@ -24,18 +24,24 @@ struct MainView: View {
             
             LogView()
         }
-        #if os(macOS)
+#if os(macOS)
         .frame(minWidth: 600, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
-        #endif
+#endif
         .onChange(of: self.authManager.oauth.state) { _, state in
             self.handle(state: state)
         }
-        .fullScreenCover(isPresented: self.$showOAuthWindow) {
-//        .sheet(isPresented: self.$showOAuthWindow) {
+#if os(macOS)
+        .sheet(isPresented: self.$showOAuthWindow) {
             OAWebView(oauth: self.authManager.oauth)
-                //.frame(maxWidth: 800, maxHeight: 800)
+                .frame(minWidth: 900, minHeight: 800)
+//                .presentationDetents([.large])
+        }
+#else
+        .fullScreenCover(isPresented: self.$showOAuthWindow) {
+            OAWebView(oauth: self.authManager.oauth)
                 .presentationDetents([.large])
         }
+#endif
     }
     /// Reacts to oauth state changes by opening or closing authorization windows.
     /// - Parameter state: the published state change

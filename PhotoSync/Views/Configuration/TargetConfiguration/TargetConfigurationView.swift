@@ -38,7 +38,6 @@ struct TargetConfigurationView: View {
                 } label: {
                     EmptyView()
                 }
-                .frame(maxWidth: .infinity)
             }
             
             if self.targetType == .filesystem {

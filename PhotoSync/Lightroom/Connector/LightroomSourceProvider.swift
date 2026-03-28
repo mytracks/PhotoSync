@@ -132,6 +132,14 @@ class LightroomSourceProvider : SourceProvider {
         return photo.captureDate
     }
     
+    func getLastModifiedDate(photo: any SourcePhoto, configuration: any SourceConfiguration) async throws -> Date? {
+        guard let photo = photo as? LightroomAsset else {
+            fatalError("Unexpected photo type")
+        }
+
+        return photo.lastModifiedDate
+    }
+    
     func requestJpegData(photo: any SourcePhoto, configuration: any SourceConfiguration, jpgQuality: CGFloat) async throws {
         guard let photo = photo as? LightroomAsset else {
             fatalError("Unexpected photo type")

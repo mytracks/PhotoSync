@@ -31,5 +31,6 @@ protocol TargetProvider {
     func getOrCreateAlbum(name: String, baseFolder: any TargetFolder, configuration: any TargetConfiguration) async throws -> any TargetAlbum
 
     func fileExists(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Bool
+    func getLastModifiedDate(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Date?
     func save(data: Data, fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws
 }

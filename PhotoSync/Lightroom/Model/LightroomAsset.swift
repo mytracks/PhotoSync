@@ -15,13 +15,15 @@ class LightroomAsset : Hashable, SourcePhoto {
     
     let id: String
     let captureDate: Date?
+    let lastModifiedDate: Date?
     let fileName: String?
 
     var album: LightroomAlbum?
 
-    init(id: String, captureDate: Date?, fileName: String?) {
+    init(id: String, captureDate: Date?, lastModifiedDate: Date?, fileName: String?) {
         self.id = id
         self.captureDate = captureDate
+        self.lastModifiedDate = lastModifiedDate
         self.fileName = fileName
     }
     
@@ -37,34 +39,36 @@ class LightroomAsset : Hashable, SourcePhoto {
 extension LightroomAsset {
     static func instance(from json: [String: Any]) -> LightroomAsset? {
         if let assetId = json["id"] as? String {
-            if let payload = json["payload"] as? [String: Any] {
-//                print("---- Asset:")
-//                print(json)
-                    
-                var captureDate: Date?
-                if let captureDateString = payload["captureDate"] as? String, captureDateString.count >= 19 {
-                    let clippedCaptureDateString = captureDateString.prefix(19)
-                    captureDate = try? Date("\(clippedCaptureDateString)Z", strategy: .iso8601)
-//                    if captureDate != nil {
-//                        print("Capture Date    (ISO8601): \(clippedCaptureDateString) \(captureDate!)")
-//                    }
-//                    else {
-//                        print("Capture Date   (no match): \(clippedCaptureDateString)")
-//                    }
-                }
-                else {
-                    captureDate = nil
-                }
-                
-                let fileName: String?
-                if let importSource = payload["importSource"] as? [String: Any] {
-                    fileName = importSource["fileName"] as? String
-                }
-                else {
-                    fileName = nil
-                }
+            if let payload = json["payload"] as? [String: Any], let subtype = json["subtype"] as? String {
+                if subtype == "image" {
+//                    print("---- Asset:")
+//                    print(json)
 
-                return LightroomAsset(id: assetId, captureDate: captureDate, fileName: fileName)
+                    var captureDate: Date?
+                    if let captureDateString = payload["captureDate"] as? String, captureDateString.count >= 19 {
+                        let clippedCaptureDateString = captureDateString.prefix(19)
+                        captureDate = try? Date("\(clippedCaptureDateString)Z", strategy: .iso8601)
+                    }
+                    else {
+                        captureDate = nil
+                    }
+                    
+                    let fileName: String?
+                    if let importSource = payload["importSource"] as? [String: Any] {
+                        fileName = importSource["fileName"] as? String
+                    }
+                    else {
+                        fileName = nil
+                    }
+                    
+                    var lastModifiedDate: Date?
+                    
+                    if let lastModifiedDateString = json["updated"] as? String {
+                        lastModifiedDate = try? Date(lastModifiedDateString, strategy: .iso8601)
+                    }                    
+                    
+                    return LightroomAsset(id: assetId, captureDate: captureDate, lastModifiedDate: lastModifiedDate, fileName: fileName)
+                }
             }
         }
 

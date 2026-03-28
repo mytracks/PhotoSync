@@ -199,30 +199,53 @@ class SyncEngine {
                             if phase == .dryRun {
                                 self.appendLog("Dry-run for for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
                             }
-                            else if try await !targetProvider.fileExists(fileName: targetFileName, album: targetAlbum, configuration: targetConfiguration) {
-                                if phase == .requestRendering {
-                                    // Request renderings
-                                    self.appendLog("Requesting JPEG rendering for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
-                                    try await sourceProvider.requestJpegData(photo: photo, configuration: sourceConfiguration, jpgQuality: 1.0)
+                            else {
+                                var needsSync = false
+                                
+                                let targetFileExists = try await targetProvider.fileExists(fileName: targetFileName, album: targetAlbum, configuration: targetConfiguration)
+                                
+                                if !targetFileExists {
+                                    needsSync = true
                                 }
-                                else if phase == .load {
-                                    // Load JPG data
-                                    if let jpegData = try await sourceProvider.getJpegData(photo: photo, configuration: sourceConfiguration, jpgQuality: 1.0) {
-                                        self.appendLog("Loading JPEG data for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
-                                        try await targetProvider.save(
-                                            data: jpegData,
-                                            fileName: targetFileName,
-                                            album: targetAlbum,
-                                            configuration: targetConfiguration)
+                                else {
+                                    let sourceModificationDate = try await sourceProvider.getLastModifiedDate(photo: photo, configuration: sourceConfiguration)
+                                    let targetModificationDate = try await targetProvider.getLastModifiedDate(fileName: targetFileName, album: targetAlbum, configuration: targetConfiguration)
+                                    
+                                    if let sourceModificationDate, let targetModificationDate {
+                                        if sourceModificationDate > targetModificationDate {
+                                            needsSync = true
+                                        }
                                     }
                                     else {
-                                        self.appendLog("Unable to retrieve JPEG data for photo '\(targetFileName)'", type: .error)
+                                        // In general, this shouldn't happen.
                                     }
                                 }
-                            }
-                            else {
-                                if phase == .load {
-                                    self.appendLog("File '\(targetFileName)' already exists (\(counter)/\(photoCount))", type: .info)
+                                
+                                if needsSync {
+                                    if phase == .requestRendering {
+                                        // Request renderings
+                                        self.appendLog("Requesting JPEG rendering for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
+                                        try await sourceProvider.requestJpegData(photo: photo, configuration: sourceConfiguration, jpgQuality: 1.0)
+                                    }
+                                    else if phase == .load {
+                                        // Load JPG data
+                                        if let jpegData = try await sourceProvider.getJpegData(photo: photo, configuration: sourceConfiguration, jpgQuality: 1.0) {
+                                            self.appendLog("Loading JPEG data for '\(targetFileName)' (\(counter)/\(photoCount))", type: .info)
+                                            try await targetProvider.save(
+                                                data: jpegData,
+                                                fileName: targetFileName,
+                                                album: targetAlbum,
+                                                configuration: targetConfiguration)
+                                        }
+                                        else {
+                                            self.appendLog("Unable to retrieve JPEG data for photo '\(targetFileName)'", type: .error)
+                                        }
+                                    }
+                                }
+                                else {
+                                    if phase == .load {
+                                        self.appendLog("File '\(targetFileName)' already exists (\(counter)/\(photoCount))", type: .info)
+                                    }
                                 }
                             }
                         }

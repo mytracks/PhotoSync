@@ -106,6 +106,23 @@ class FilesystemTargetProvider : TargetProvider {
         return FileManager.default.fileExists(atPath: filepath.path)
     }
     
+    func getLastModifiedDate(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Date? {
+        guard let album = album as? FilesystemTargetAlbum else {
+            fatalError("Unexpected album type")
+        }
+        
+        let filepath = album.url.appendingPathComponent(fileName)
+        
+        if FileManager.default.fileExists(atPath: filepath.path) {
+            let resourceKeys: Set<URLResourceKey> = [.contentModificationDateKey]
+            let values = try filepath.resourceValues(forKeys: resourceKeys)
+            return values.contentModificationDate
+        }
+        
+        return nil
+    }
+    
+    
     func save(data: Data, fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws {
         guard let album = album as? FilesystemTargetAlbum else {
             fatalError("Unexpected album type")
@@ -153,3 +170,4 @@ class FilesystemTargetProvider : TargetProvider {
 enum FilesystemTargetProviderError: Error {
     case general(String)
 }
+
