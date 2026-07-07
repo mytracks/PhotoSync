@@ -213,6 +213,7 @@ class SyncEngine {
                                     
                                     if let sourceModificationDate, let targetModificationDate {
                                         if sourceModificationDate > targetModificationDate {
+//                                            self.appendLog("Source: \(sourceModificationDate) > Target: \(targetModificationDate)", type: .info)
                                             needsSync = true
                                         }
                                     }
@@ -244,7 +245,7 @@ class SyncEngine {
                                 }
                                 else {
                                     if phase == .load {
-                                        self.appendLog("File '\(targetFileName)' already exists (\(counter)/\(photoCount))", type: .info)
+//                                        self.appendLog("File '\(targetFileName)' already exists (\(counter)/\(photoCount))", type: .info)
                                     }
                                 }
                             }

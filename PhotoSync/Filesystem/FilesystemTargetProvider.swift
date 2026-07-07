@@ -103,7 +103,9 @@ class FilesystemTargetProvider : TargetProvider {
         
         let filepath = album.url.appendingPathComponent(fileName)
         
-        return FileManager.default.fileExists(atPath: filepath.path)
+        let fileExists = FileManager.default.fileExists(atPath: filepath.path)
+        
+        return fileExists
     }
     
     func getLastModifiedDate(fileName: String, album: any TargetAlbum, configuration: any TargetConfiguration) async throws -> Date? {
@@ -130,6 +132,7 @@ class FilesystemTargetProvider : TargetProvider {
 
         let filepath = album.url.appendingPathComponent(fileName)
         
+        try? FileManager.default.removeItem(atPath: filepath.path)
         FileManager.default.createFile(atPath: filepath.path, contents: data)
     }
     

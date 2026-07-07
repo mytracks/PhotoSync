@@ -62,10 +62,16 @@ extension LightroomAsset {
                     }
                     
                     var lastModifiedDate: Date?
-                    
-                    if let lastModifiedDateString = json["updated"] as? String {
-                        lastModifiedDate = try? Date(lastModifiedDateString, strategy: .iso8601)
-                    }                    
+
+                    if lastModifiedDate == nil, let lastModifiedDateString = json["updated"] as? String {
+                        if let originalLastModifiedDate = try? Date(lastModifiedDateString, strategy: .iso8601) {
+                            // When a JPEG rendering is requested the "updated" field is also updated.
+                            // Therefore it can happen that the Lightroom "updated" timestamp is younger
+                            // then the file on disk (because of not synchronized clocks).
+                            // As a hack, some seconds are removed.
+                            lastModifiedDate = originalLastModifiedDate.addingTimeInterval(-10)
+                        }
+                    }
                     
                     return LightroomAsset(id: assetId, captureDate: captureDate, lastModifiedDate: lastModifiedDate, fileName: fileName)
                 }

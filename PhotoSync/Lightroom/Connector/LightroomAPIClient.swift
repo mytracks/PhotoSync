@@ -7,6 +7,12 @@
 
 import Foundation
 
+enum LightroomAPIError: Error {
+    case invalidURL
+    case clientError(Int)
+    case serverError(Int)
+}
+
 /// https://developer.adobe.com/lightroom/lightroom-api-docs/api/
 class LightroomAPIClient {
     private static let baseURL = "https://lr.adobe.io/v2"
@@ -42,11 +48,11 @@ class LightroomAPIClient {
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
-            throw NSError(
-                domain: "LightroomAPI",
-                code: httpResponse.statusCode,
-                userInfo: [NSLocalizedDescriptionKey: "API request failed with status code \(httpResponse.statusCode)"]
-            )
+            if httpResponse.statusCode >= 400, httpResponse.statusCode < 500 {
+                throw LightroomAPIError.clientError(httpResponse.statusCode)
+            }
+
+            throw LightroomAPIError.serverError(httpResponse.statusCode)
         }
         
         // Some Adobe APIs prefix JSON with a security string like "while (1) {}". Strip it if present.
@@ -90,11 +96,11 @@ class LightroomAPIClient {
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
-            throw NSError(
-                domain: "LightroomAPI",
-                code: httpResponse.statusCode,
-                userInfo: [NSLocalizedDescriptionKey: "API request failed with status code \(httpResponse.statusCode)"]
-            )
+            if httpResponse.statusCode >= 400, httpResponse.statusCode < 500 {
+                throw LightroomAPIError.clientError(httpResponse.statusCode)
+            }
+
+            throw LightroomAPIError.serverError(httpResponse.statusCode)
         }
         
         // Some Adobe APIs prefix JSON with a security string like "while (1) {}". Strip it if present.

@@ -153,13 +153,30 @@ class LightroomSourceProvider : SourceProvider {
             fatalError("Unexpected photo type")
         }
 
-        var retries = 60
+        var retries = 30
         repeat {
             do {
                 return try await self.lightroomConnector.getFullsizeRendition(authManager: self.authManager, asset: photo)
             }
-            catch {
+            catch let error as LightroomAPIError {
+                switch error {
+                case .invalidURL:
+                    throw error
+                case .clientError(let statusCode):
+                    if statusCode == 404 {
+                        // This can happen when the rendering is not yet available.
+                    }
+                    else {
+                        print("clientError: \(statusCode)")
+                        return nil
+                    }
+//                    throw error
+                case .serverError(let statusCode):
+                    print("serverError: \(statusCode)")
+//                    throw error
+                }
                 print("Retry: \(retries)")
+
                 try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
             }
             
