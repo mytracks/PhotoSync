@@ -18,7 +18,12 @@ struct MainView: View {
     
     var body: some View {
         VStack {
-            SyncConfigurationView()
+            if syncEngine.status.isActive || syncEngine.status == .completed || isFailedStatus(syncEngine.status) {
+                SyncProgressView()
+                    .padding()
+            } else {
+                SyncConfigurationView()
+            }
             
             Divider()
             
@@ -43,6 +48,12 @@ struct MainView: View {
         }
 #endif
     }
+    
+    private func isFailedStatus(_ status: SyncStatus) -> Bool {
+        if case .failed(_) = status { return true }
+        return false
+    }
+    
     /// Reacts to oauth state changes by opening or closing authorization windows.
     /// - Parameter state: the published state change
     private func handle(state: OAuth.State) {

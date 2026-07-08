@@ -35,6 +35,7 @@ class SyncEngine {
     ) {
         Task {
             do {
+                self.status = .syncing
                 self.appendLog("Starting sync", type: .info)
                 
                 targetProvider.syncWillStart(config: targetConfiguration)
@@ -79,9 +80,11 @@ class SyncEngine {
                 }
                 
                 self.appendLog("Sync finished", type: .info)
+                self.status = .completed
             }
             catch let exception {
                 self.appendLog("Unhandled error: \(exception)", type: .error)
+                self.status = .failed(exception.localizedDescription)
             }
         }
     }
