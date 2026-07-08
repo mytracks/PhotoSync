@@ -1,0 +1,39 @@
+{
+  "name": "PhotoSync",
+  "image": "swift:latest",
+  "features": {
+    // "ghcr.io/devcontainers/features/node:1": {
+    //   "version": "22",
+    //   "nodeGypDependencies": true
+    // },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/stu-bell/devcontainer-features/open-code:0": {
+      "version": "latest"
+    }
+    // "ghcr.io/devcontainers/features/python:1": {
+    //   "version": "latest"
+    // }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "swiftlang.swift-vscode",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      }
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.config/opencode,target=/root/.config/opencode,type=bind"
+  ],
+  "remoteUser": "root"
+}
